@@ -1,14 +1,29 @@
 const { PinataSDK } = require("pinata-web3");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const logger = require("../utils/logger");
 
 let pinata = null;
 
+// Local storage directory for dev/testing without Pinata
+const LOCAL_STORAGE_DIR = path.join(__dirname, "../../uploads");
+
+function isLocalMode() {
+  const jwt = process.env.PINATA_JWT || "";
+  return !jwt || jwt === "your_pinata_jwt_here" || jwt.length < 20;
+}
+
+function ensureLocalDir() {
+  if (!fs.existsSync(LOCAL_STORAGE_DIR)) {
+    fs.mkdirSync(LOCAL_STORAGE_DIR, { recursive: true });
+  }
+}
+
 function getPinata() {
   if (!pinata) {
-    if (!process.env.PINATA_JWT) {
-      throw new Error("PINATA_JWT environment variable is required");
+    if (isLocalMode()) {
+      throw new Error("Pinata not configured - using local mode");
     }
     pinata = new PinataSDK({
       pinataJwt: process.env.PINATA_JWT,
@@ -19,13 +34,18 @@ function getPinata() {
 }
 
 /**
- * Upload a file to Pinata IPFS
+ * Upload a file to Pinata IPFS (or local storage in dev mode)
  * @param {string} filePath - Local file path
  * @param {string} fileName - Original file name
  * @param {object} metadata - Optional metadata key-value pairs
  * @returns {Promise<{cid: string, size: number}>}
  */
 async function uploadFile(filePath, fileName, metadata = {}) {
+  // Local storage fallback for development
+  if (isLocalMode()) {
+    return uploadFileLocal(filePath, fileName);
+  }
+
   try {
     const sdk = getPinata();
     const stat = fs.statSync(filePath);
@@ -56,6 +76,21 @@ async function uploadFile(filePath, fileName, metadata = {}) {
     logger.error("Pinata upload failed:", error);
     throw new Error(`IPFS upload failed: ${error.message}`);
   }
+}
+
+/**
+ * Local file storage fallback (dev/testing only)
+ */
+async function uploadFileLocal(filePath, fileName) {
+  ensureLocalDir();
+  const stat = fs.statSync(filePath);
+  const hash = crypto.createHash("sha256").update(fs.readFileSync(filePath)).digest("hex").slice(0, 32);
+  const ext = path.extname(fileName);
+  const localName = `${hash}${ext}`;
+  const destPath = path.join(LOCAL_STORAGE_DIR, localName);
+  fs.copyFileSync(filePath, destPath);
+  logger.info(`[LOCAL MODE] File saved locally as ${localName}`, { fileName, size: stat.size });
+  return { cid: localName, size: stat.size };
 }
 
 /**

@@ -105,9 +105,12 @@ export default function UploadPage() {
         throw new Error("No cover provided");
       }
 
-      // 2. Upload Video
+      // 2. Upload Video (new signature to avoid nonce replay rejection)
       toast.info("Uploading video...");
-      const videoRes = await api.uploadVideo(videoFile, address, signature, message);
+      const timestamp2 = Math.floor(Date.now() / 1000);
+      const message2 = `BSC-DApp-Auth:${timestamp2}:upload`;
+      const signature2 = await signMessageAsync({ message: message2 });
+      const videoRes = await api.uploadVideo(videoFile, address, signature2, message2);
       if (!videoRes.success) throw new Error("Video upload failed");
       const videoCid = videoRes.cid;
       setUploadProgress(80);

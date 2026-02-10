@@ -1,9 +1,7 @@
 "use client";
 
-import { useQuery } from "@apollo/client";
-import { GET_VIDEO, GET_USER_LIKES } from "@/lib/queries";
 import { useInteraction } from "@/hooks/useInteraction";
-import { useAccount } from "wagmi";
+import { useAccount, usePublicClient } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -12,30 +10,77 @@ import { Heart, User, Calendar, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useState, useEffect } from "react";
+import { parseAbiItem } from "viem";
+
+const INTERACTION_ADDRESS = process.env.NEXT_PUBLIC_INTERACTION_ADDRESS as `0x${string}`;
+const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
+
+interface VideoData {
+  id: string;
+  cid: string;
+  title: string;
+  coverCid: string;
+  uploader: string;
+  likeCount: number;
+  timestamp: number;
+}
 
 export default function VideoPage() {
   const { id } = useParams();
   const { address, isConnected } = useAccount();
   const { likeVideo, isPending: isLikePending, isConfirming: isLikeConfirming } = useInteraction();
+  const publicClient = usePublicClient();
 
-  const { data, loading, error } = useQuery(GET_VIDEO, {
-    variables: { id },
-    pollInterval: 30000,
-  });
+  const [video, setVideo] = useState<VideoData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isLiked, setIsLiked] = useState(false);
 
-  const { data: likeData } = useQuery(GET_USER_LIKES, {
-    variables: { 
-      liker: address?.toLowerCase(), 
-      videoIds: [id] 
-    },
-    skip: !address || !id,
-    pollInterval: 30000,
-  });
+  useEffect(() => {
+    async function fetchVideo() {
+      if (!publicClient || !INTERACTION_ADDRESS || !id) {
+        setLoading(false);
+        return;
+      }
+      try {
+        setLoading(true);
+        const logs = await publicClient.getLogs({
+          address: INTERACTION_ADDRESS,
+          event: parseAbiItem('event VideoRegistered(bytes32 indexed videoId, address indexed uploader, string cid, string title, string coverCid, uint256 timestamp)'),
+          fromBlock: BigInt(0),
+          toBlock: 'latest',
+        });
 
-  const isLiked = useMemo(() => {
-    return likeData?.likes?.length > 0;
-  }, [likeData]);
+        // Normalize ID: ensure lowercase, 0x-prefixed, 66-char bytes32 hex
+        const normalizeId = (v: string) => {
+          let h = v.toLowerCase();
+          if (!h.startsWith('0x')) h = '0x' + h;
+          return h.padEnd(66, '0');
+        };
+        const targetId = normalizeId(id as string);
+        const found = logs.find((log) => normalizeId(log.args.videoId as string) === targetId);
+        if (found) {
+          setVideo({
+            id: found.args.videoId as string,
+            cid: (found.args as any).cid || '',
+            title: (found.args as any).title || '',
+            coverCid: (found.args as any).coverCid || '',
+            uploader: found.args.uploader as string,
+            likeCount: 0,
+            timestamp: Number((found.args as any).timestamp || 0),
+          });
+        } else {
+          setError("Video not found");
+        }
+      } catch (err: any) {
+        setError(err.message || "Failed to fetch video");
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchVideo();
+  }, [publicClient, id]);
 
   const handleLike = async () => {
     if (!isConnected) {
@@ -69,22 +114,21 @@ export default function VideoPage() {
     );
   }
 
-  if (error || !data?.video) {
+  if (error || !video) {
     return (
       <div className="container py-8 px-4 flex justify-center">
         <Alert variant="destructive" className="max-w-md">
           <AlertTitle>Error</AlertTitle>
-          <AlertDescription>
-            {error ? error.message : "Video not found"}
-          </AlertDescription>
+          <AlertDescription>{error || "Video not found"}</AlertDescription>
         </Alert>
       </div>
     );
   }
 
-  const video = data.video;
-  const gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs/";
-  const videoUrl = `${gateway}${video.cid}`;
+  // Use local backend for files in dev mode, IPFS gateway in production
+  const isLocalFile = video.cid && !video.cid.startsWith("Qm") && !video.cid.startsWith("bafy");
+  const videoUrl = isLocalFile ? `${BACKEND_URL}/api/local-ipfs/${video.cid}` : `${process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs/"}${video.cid}`;
+  const coverUrl = isLocalFile ? `${BACKEND_URL}/api/local-ipfs/${video.coverCid}` : `${process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs/"}${video.coverCid}`;
 
   return (
     <div className="container py-8 px-4 max-w-4xl">
@@ -92,7 +136,7 @@ export default function VideoPage() {
         <video 
           controls 
           className="w-full h-full"
-          poster={`${gateway}${video.coverCid}`}
+          poster={coverUrl}
           src={videoUrl}
         >
           Your browser does not support the video tag.
@@ -130,9 +174,9 @@ export default function VideoPage() {
                 </p>
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Calendar className="h-4 w-4" />
-                    <span>Uploaded {formatDistanceToNow(Number(video.timestamp) * 1000, { addSuffix: true })}</span>
+                    <span>Uploaded {video.timestamp > 1000000 ? formatDistanceToNow(Number(video.timestamp) * 1000, { addSuffix: true }) : "Just now"}</span>
                     <span>•</span>
-                    <span>Round #{video.roundId}</span>
+                    <span>ID: {(video.id as string).slice(0, 10)}...</span>
                 </div>
             </div>
         </div>

@@ -3,7 +3,7 @@
 import { VideoCard } from "@/components/VideoCard";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { AlertCircle, Info } from "lucide-react";
+import { Info } from "lucide-react";
 import { useAccount } from "wagmi";
 import { useInteraction } from "@/hooks/useInteraction";
 import { useVideos } from "@/hooks/useVideos";

@@ -60,13 +60,13 @@ router.get("/blocklist", (req, res) => {
  * Report a video by CID. Requires wallet signature.
  * Body: { cid: string, reason?: string }
  */
-router.post("/report", verifySignature, (req, res) => {
+router.post("/report", verifySignature, async (req, res) => {
   const { cid, reason } = req.body;
   if (!cid || typeof cid !== "string") {
     return res.status(400).json({ error: "CID is required" });
   }
 
-  withFileLock(() => {
+  await withFileLock(() => {
     try {
       const reports = loadJson(REPORTS_FILE, {});
 

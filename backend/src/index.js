@@ -3,6 +3,7 @@ const express = require("express");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const path = require("path");
 const { initSettlerCron } = require("./services/settler");
 const logger = require("./utils/logger");
 
@@ -45,6 +46,9 @@ app.use(limiter);
 
 // Body parsing
 app.use(express.json({ limit: "5mb" }));
+
+// Serve local uploads (dev mode IPFS fallback)
+app.use("/api/local-ipfs", express.static(path.join(__dirname, "../uploads")));
 
 // Routes
 app.use("/api/upload", uploadRoutes);

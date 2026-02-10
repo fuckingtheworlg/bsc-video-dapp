@@ -31,8 +31,10 @@ router.get("/", async (req, res) => {
   }
 
   // Check Pinata connectivity
+  const jwt = process.env.PINATA_JWT || "";
+  const pinataLocal = !jwt || jwt === "your_pinata_jwt_here" || jwt.length < 20;
   status.services.pinata = {
-    status: process.env.PINATA_JWT ? "configured" : "not_configured",
+    status: pinataLocal ? "local_mode" : "configured",
   };
 
   // Check settler configuration

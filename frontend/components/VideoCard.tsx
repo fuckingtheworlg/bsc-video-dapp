@@ -34,9 +34,11 @@ export function VideoCard({
   // Truncate address
   const shortAddress = `${uploader.slice(0, 6)}...${uploader.slice(-4)}`;
   
-  // Gateway URL from environment variable
+  // Use local backend for files in dev mode, IPFS gateway in production
+  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
   const gateway = process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs/";
-  const coverUrl = `${gateway}${coverCid}`;
+  const isLocalFile = coverCid && !coverCid.startsWith("Qm") && !coverCid.startsWith("bafy");
+  const coverUrl = isLocalFile ? `${backendUrl}/api/local-ipfs/${coverCid}` : `${gateway}${coverCid}`;
 
   return (
     <Card className="overflow-hidden group hover:border-primary/50 transition-all duration-300">
@@ -74,7 +76,7 @@ export function VideoCard({
                 {shortAddress}
             </span>
             <span>•</span>
-            <span>{formatDistanceToNow(timestamp * 1000, { addSuffix: true })}</span>
+            <span>{timestamp > 1000000 ? formatDistanceToNow(timestamp * 1000, { addSuffix: true }) : "Just now"}</span>
         </div>
       </CardContent>
 
