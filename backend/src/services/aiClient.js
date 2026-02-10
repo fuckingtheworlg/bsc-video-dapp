@@ -264,19 +264,30 @@ async function getVideoTaskStatus(taskId) {
     status = "pending";
   }
 
-  // Extract video URL from content array if succeeded
+  // Extract video URL from response
   let videoUrl = null;
-  if (status === "completed" && Array.isArray(data.content)) {
-    for (const item of data.content) {
-      if (item.type === "video_url" && item.video_url?.url) {
-        videoUrl = item.video_url.url;
-        break;
+  if (status === "completed") {
+    // Volcengine returns content as object: { video_url: "https://..." }
+    if (data.content && typeof data.content === "object" && !Array.isArray(data.content)) {
+      videoUrl = data.content.video_url || null;
+    }
+    // Fallback: content as array
+    if (!videoUrl && Array.isArray(data.content)) {
+      for (const item of data.content) {
+        if (item.type === "video_url" && item.video_url?.url) {
+          videoUrl = item.video_url.url;
+          break;
+        }
+        if (typeof item.video_url === "string") {
+          videoUrl = item.video_url;
+          break;
+        }
       }
     }
-  }
-  // Fallback: check video_url at top level
-  if (!videoUrl && status === "completed") {
-    videoUrl = data.video_url?.url || data.video?.url || null;
+    // Fallback: top level
+    if (!videoUrl) {
+      videoUrl = data.video_url || data.video?.url || null;
+    }
   }
 
   logger.info(`[Seedance] taskStatus: id=${taskId}, status=${rawStatus}, hasVideo=${!!videoUrl}`);
