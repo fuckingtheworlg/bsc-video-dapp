@@ -27,7 +27,7 @@ export function Navbar() {
                 <Video className="relative h-6 w-6 text-white" />
               </div>
               <span className="bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent group-hover:to-white transition-all">
-                BSC Video
+                BSC 视频平台
               </span>
             </Link>
 

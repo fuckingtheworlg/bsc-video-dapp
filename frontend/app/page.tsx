@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useState } from "react";
 import { Hero } from "@/components/Hero";
 import { FeatureShowcase } from "@/components/FeatureShowcase";
+import { RewardPoolMonitor } from "@/components/RewardPoolMonitor";
+import { FadeIn } from "@/components/animations/FadeIn";
 
 export default function Home() {
   const { address, isConnected } = useAccount();
@@ -38,21 +40,20 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="container py-12 px-4">
-        <div className="flex items-center gap-3 mb-10">
-            <div className="h-8 w-8 rounded-full bg-white/10 animate-pulse" />
-            <div className="h-8 w-48 rounded-lg bg-white/10 animate-pulse" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-          {[...Array(8)].map((_, i) => (
-            <div key={i} className="flex flex-col space-y-4">
-              <Skeleton className="h-[220px] w-full rounded-2xl bg-white/5" />
-              <div className="space-y-3 px-1">
-                <Skeleton className="h-5 w-[80%] bg-white/5" />
-                <Skeleton className="h-4 w-[60%] bg-white/5" />
+      <div className="min-h-screen bg-black text-white">
+        <Hero />
+        <div className="container py-12 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="flex flex-col space-y-4">
+                <Skeleton className="h-[220px] w-full rounded-2xl bg-white/5" />
+                <div className="space-y-3 px-1">
+                  <Skeleton className="h-5 w-[80%] bg-white/5" />
+                  <Skeleton className="h-4 w-[60%] bg-white/5" />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </div>
     );
@@ -61,65 +62,70 @@ export default function Home() {
   // Handle errors gracefully
   if (error) {
     return (
-      <div className="container py-12 px-4">
-        <div className="flex justify-between items-center mb-10">
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-white to-zinc-400 bg-clip-text text-transparent">最新视频</h1>
-        </div>
-        <Alert className="mb-6 border-red-500/20 bg-red-500/10 text-red-400">
-          <Info className="h-4 w-4" />
-          <AlertTitle>连接问题</AlertTitle>
-          <AlertDescription>
-            无法加载视频。请确保您的钱包已连接到正确的网络。
-          </AlertDescription>
-        </Alert>
-        <div className="text-center py-20 bg-white/5 rounded-3xl border border-white/5 backdrop-blur-sm">
-          <p className="text-zinc-400 text-lg">连接钱包并上传您的第一个视频！</p>
+      <div className="min-h-screen bg-black text-white">
+        <Hero />
+        <div className="container py-12 px-4">
+          <Alert className="mb-6 border-red-500/20 bg-red-500/10 text-red-400">
+            <Info className="h-4 w-4" />
+            <AlertTitle>连接问题</AlertTitle>
+            <AlertDescription>
+              无法加载视频。请确保您的钱包已连接到正确的网络。
+            </AlertDescription>
+          </Alert>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen bg-black text-white selection:bg-blue-500/30 selection:text-blue-200">
       <Hero />
+      
+      <div className="relative z-10 -mt-20 px-4">
+        <RewardPoolMonitor />
+      </div>
+
       <FeatureShowcase />
       
-      <div id="explore" className="container py-20 px-4">
-        <div className="flex justify-between items-center mb-12">
+      <div id="explore" className="container py-20 px-4 relative">
+        <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        
+        <FadeIn className="flex justify-between items-center mb-12">
           <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
                   <Sparkles className="h-6 w-6 text-blue-400" />
               </div>
               <h1 className="text-4xl font-bold bg-gradient-to-r from-white via-blue-100 to-zinc-400 bg-clip-text text-transparent">
-                  Explore Content
+                  发现精彩内容
               </h1>
           </div>
-        </div>
+        </FadeIn>
 
         {videos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-32 px-4 text-center bg-white/5 rounded-3xl border border-dashed border-white/10 backdrop-blur-sm">
+          <FadeIn className="flex flex-col items-center justify-center py-32 px-4 text-center bg-white/5 rounded-[2rem] border border-dashed border-white/10 backdrop-blur-sm">
             <div className="p-6 rounded-full bg-white/5 mb-6 animate-pulse">
               <Video className="h-16 w-16 text-zinc-500" />
             </div>
-            <h3 className="text-2xl font-medium text-white mb-2">No Videos Yet</h3>
+            <h3 className="text-2xl font-medium text-white mb-2">暂无视频</h3>
             <p className="text-zinc-400 text-lg max-w-md">
-              Be the first to share your creation with the world!
+              还没有人上传视频。成为第一个分享精彩时刻的人吧！
             </p>
-          </div>
+          </FadeIn>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {videos.map((video: any) => (
-              <VideoCard
-                key={video.id}
-                id={video.id}
-                title={video.title}
-                coverCid={video.coverCid}
-                uploader={video.uploader}
-                likeCount={Number(video.likeCount)}
-                timestamp={Number(video.timestamp)}
-                onLike={handleLike}
-                isLiked={likedVideoIds.has(video.id)}
-              />
+              <FadeIn key={video.id}>
+                <VideoCard
+                  id={video.id}
+                  title={video.title}
+                  coverCid={video.coverCid}
+                  uploader={video.uploader}
+                  likeCount={Number(video.likeCount)}
+                  timestamp={Number(video.timestamp)}
+                  onLike={handleLike}
+                  isLiked={likedVideoIds.has(video.id)}
+                />
+              </FadeIn>
             ))}
           </div>
         )}
