@@ -115,7 +115,7 @@ router.post("/image", verifySignature, checkEligibility, async (req, res) => {
     res.json({
       success: true,
       imageUrl: result.imageUrl,
-      cooldownRemaining: COOLDOWN_MS / 1000,
+      cooldownRemaining: SKIP_COOLDOWN ? 0 : COOLDOWN_MS / 1000,
     });
   } catch (error) {
     logger.error("[AI Route] Image generation failed:", error.message);
@@ -152,7 +152,7 @@ router.post("/video", verifySignature, checkEligibility, async (req, res) => {
     res.json({
       success: true,
       taskId: result.taskId,
-      cooldownRemaining: COOLDOWN_MS / 1000,
+      cooldownRemaining: SKIP_COOLDOWN ? 0 : COOLDOWN_MS / 1000,
     });
   } catch (error) {
     logger.error("[AI Route] Video generation failed:", error.message);
@@ -188,7 +188,7 @@ router.post("/img2video", verifySignature, checkEligibility, async (req, res) =>
     res.json({
       success: true,
       taskId: result.taskId,
-      cooldownRemaining: COOLDOWN_MS / 1000,
+      cooldownRemaining: SKIP_COOLDOWN ? 0 : COOLDOWN_MS / 1000,
     });
   } catch (error) {
     logger.error("[AI Route] Img2Video failed:", error.message);

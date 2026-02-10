@@ -45,6 +45,8 @@ export default function CreatePage() {
   const [videoStatus, setVideoStatus] = useState<VideoStatus>("idle");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoProgress, setVideoProgress] = useState(0);
+  const [videoStartTime, setVideoStartTime] = useState<number | null>(null);
+  const [videoElapsed, setVideoElapsed] = useState(0);
 
   // Image-to-video state
   const [i2vImageData, setI2vImageData] = useState<string | null>(null);
@@ -55,6 +57,8 @@ export default function CreatePage() {
   const [i2vStatus, setI2vStatus] = useState<VideoStatus>("idle");
   const [i2vVideoUrl, setI2vVideoUrl] = useState<string | null>(null);
   const [i2vProgress, setI2vProgress] = useState(0);
+  const [i2vStartTime, setI2vStartTime] = useState<number | null>(null);
+  const [i2vElapsed, setI2vElapsed] = useState(0);
 
   // Cooldown state
   const [cooldownSec, setCooldownSec] = useState(0);
@@ -91,6 +95,24 @@ export default function CreatePage() {
     }, 1000);
     return () => clearInterval(timer);
   }, [cooldownSec]);
+
+  // Elapsed time counter for video generation
+  useEffect(() => {
+    const isProcessing =
+      (videoStatus === "processing" || videoStatus === "submitting") ||
+      (i2vStatus === "processing" || i2vStatus === "submitting");
+    if (!isProcessing) return;
+
+    const timer = setInterval(() => {
+      if (videoStartTime && (videoStatus === "processing" || videoStatus === "submitting")) {
+        setVideoElapsed(Math.floor((Date.now() - videoStartTime) / 1000));
+      }
+      if (i2vStartTime && (i2vStatus === "processing" || i2vStatus === "submitting")) {
+        setI2vElapsed(Math.floor((Date.now() - i2vStartTime) / 1000));
+      }
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [videoStatus, i2vStatus, videoStartTime, i2vStartTime]);
 
   // Poll video task status (shared for text2video and img2video)
   useEffect(() => {
@@ -201,6 +223,8 @@ export default function CreatePage() {
       setVideoStatus("submitting");
       setVideoUrl(null);
       setVideoProgress(0);
+      setVideoStartTime(Date.now());
+      setVideoElapsed(0);
       toast.info("正在签名验证身份...");
       const headers = await getAuthHeaders();
 
@@ -264,6 +288,8 @@ export default function CreatePage() {
       setI2vStatus("submitting");
       setI2vVideoUrl(null);
       setI2vProgress(0);
+      setI2vStartTime(Date.now());
+      setI2vElapsed(0);
       toast.info("正在签名验证身份...");
       const headers = await getAuthHeaders();
 
@@ -668,16 +694,15 @@ export default function CreatePage() {
                 {videoStatus === "submitting" ? "正在提交任务..." : "视频生成中..."}
               </p>
               {videoStatus === "processing" && (
-                <div className="w-48 mt-3">
+                <div className="w-64 mt-3 space-y-2">
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(videoProgress, 10)}%` }}
-                    />
+                    <div className="h-full bg-gradient-to-r from-pink-500 to-purple-500 rounded-full animate-pulse" style={{ width: "100%" }} />
                   </div>
-                  <p className="text-xs text-zinc-500 mt-2 text-center">
-                    {videoProgress > 0 ? `${videoProgress}%` : "请耐心等待，视频生成需要一些时间..."}
-                  </p>
+                  <div className="flex justify-between text-xs text-zinc-500">
+                    <span>已用时 <span className="font-mono text-pink-400">{Math.floor(videoElapsed / 60)}:{String(videoElapsed % 60).padStart(2, "0")}</span></span>
+                    <span>预计 1~5 分钟</span>
+                  </div>
+                  <p className="text-xs text-zinc-600 text-center">Seedance 视频生成需要一些时间，请耐心等待</p>
                 </div>
               )}
             </div>
@@ -739,7 +764,7 @@ export default function CreatePage() {
             <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
               <Video className="h-12 w-12 text-zinc-600 mb-4" />
               <p className="text-zinc-500">输入提示词后点击生成，AI 视频将在这里展示</p>
-              <p className="text-xs text-zinc-600 mt-2">支持 4秒 / 8秒 / 12秒，720p 分辨率</p>
+              <p className="text-xs text-zinc-600 mt-2">Seedance 1.5 pro · 4~12秒 · 720p · 支持有声视频</p>
             </div>
           )}
         </div>
@@ -754,16 +779,15 @@ export default function CreatePage() {
                 {i2vStatus === "submitting" ? "正在提交任务..." : "图生视频中..."}
               </p>
               {i2vStatus === "processing" && (
-                <div className="w-48 mt-3">
+                <div className="w-64 mt-3 space-y-2">
                   <div className="h-2 rounded-full bg-white/10 overflow-hidden">
-                    <div
-                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.max(i2vProgress, 10)}%` }}
-                    />
+                    <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full animate-pulse" style={{ width: "100%" }} />
                   </div>
-                  <p className="text-xs text-zinc-500 mt-2 text-center">
-                    {i2vProgress > 0 ? `${i2vProgress}%` : "请耐心等待，视频生成需要一些时间..."}
-                  </p>
+                  <div className="flex justify-between text-xs text-zinc-500">
+                    <span>已用时 <span className="font-mono text-cyan-400">{Math.floor(i2vElapsed / 60)}:{String(i2vElapsed % 60).padStart(2, "0")}</span></span>
+                    <span>预计 1~5 分钟</span>
+                  </div>
+                  <p className="text-xs text-zinc-600 text-center">Seedance 视频生成需要一些时间，请耐心等待</p>
                 </div>
               )}
             </div>
@@ -826,7 +850,7 @@ export default function CreatePage() {
             <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
               <Film className="h-12 w-12 text-zinc-600 mb-4" />
               <p className="text-zinc-500">上传图片后点击生成，AI 将把图片转为视频</p>
-              <p className="text-xs text-zinc-600 mt-2">支持 4秒 / 8秒 / 12秒，720p 分辨率</p>
+              <p className="text-xs text-zinc-600 mt-2">Seedance 1.5 pro · 4~12秒 · 720p · 支持有声视频</p>
             </div>
           )}
         </div>
