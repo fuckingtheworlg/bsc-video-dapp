@@ -57,7 +57,7 @@ export function VideoCard({
             </div>
         )}
         
-        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
+        <div className="absolute inset-0 bg-black/40 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
             <Link href={`/video/${id}`}>
                 <Button size="icon" variant="secondary" className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md transition-all duration-300 hover:scale-110 shadow-lg shadow-black/20">
                     <Play className="w-8 h-8 ml-1 fill-white" />

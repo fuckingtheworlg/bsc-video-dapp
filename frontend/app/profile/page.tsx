@@ -55,7 +55,7 @@ export default function ProfilePage() {
     {
       label: "代币余额",
       value: balance.toLocaleString(),
-      unit: "VIDE",
+      unit: "BNB",
       sub: `持仓加成 +${holdingBonus}%`,
       icon: Wallet,
       color: "text-blue-400",

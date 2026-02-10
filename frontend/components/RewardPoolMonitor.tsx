@@ -7,16 +7,37 @@ import { useEffect, useState } from "react";
 import { formatEther } from "viem";
 
 export function RewardPoolMonitor() {
-  const { roundData, timeRemaining, currentRoundId } = useRoundInfo();
+  const { roundData, currentRoundId } = useRoundInfo();
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
-    if (timeRemaining === undefined) return;
-    const seconds = Number(timeRemaining);
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    setTimeLeft(`${m}:${s.toString().padStart(2, "0")}`);
-  }, [timeRemaining]);
+    if (!roundData) return;
+
+    const updateTimer = () => {
+      const now = Math.floor(Date.now() / 1000);
+      const end = Number(roundData.endTime);
+      const remaining = Math.max(0, end - now);
+      
+      const m = Math.floor(remaining / 60);
+      const s = remaining % 60;
+      setTimeLeft(`${m}:${s.toString().padStart(2, "0")}`);
+
+      // Calculate progress
+      const start = Number(roundData.startTime);
+      const totalDuration = end - start;
+      const elapsed = now - start;
+      const newProgress = totalDuration > 0 
+        ? Math.min(100, Math.max(0, (elapsed / totalDuration) * 100))
+        : 0;
+      
+      setProgress(newProgress);
+    };
+
+    updateTimer(); // Initial update
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [roundData]);
 
   const poolAmount = roundData ? Number(formatEther(roundData.rewardPool)).toFixed(0) : "0";
   const participantCount = roundData ? Number(roundData.participantCount) : 0;
@@ -37,7 +58,7 @@ export function RewardPoolMonitor() {
                 <h3 className="text-zinc-400 text-sm font-medium mb-1">当前轮次奖励池</h3>
                 <div className="text-4xl font-bold text-white tracking-tight flex items-baseline gap-2">
                   {poolAmount}
-                  <span className="text-lg text-zinc-500 font-normal">VIDE</span>
+                  <span className="text-lg text-zinc-500 font-normal">BNB</span>
                 </div>
               </div>
             </div>
@@ -68,7 +89,7 @@ export function RewardPoolMonitor() {
                 <div className="h-1.5 w-full bg-white/10 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-blue-500 to-purple-500 transition-all duration-1000"
-                    style={{ width: `${Math.max(0, Math.min(100, (1 - Number(timeRemaining || 0) / (45 * 60)) * 100))}%` }}
+                    style={{ width: `${progress}%` }}
                   />
                 </div>
               </div>

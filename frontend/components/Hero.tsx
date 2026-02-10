@@ -1,10 +1,11 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Play, Sparkles } from "lucide-react";
+import { ArrowRight, Play, Sparkles, Copy } from "lucide-react";
 import Link from "next/link";
 import { FadeIn } from "./animations/FadeIn";
 import { TextReveal } from "./animations/TextReveal";
+import { SeeshowLogo } from "./SeeshowLogo";
 
 export function Hero() {
   return (
@@ -57,6 +58,23 @@ export function Hero() {
                 </Button>
               </Link>
             </FadeIn>
+
+            {/* CA + Twitter Banner */}
+            <FadeIn delay={0.5} className="flex flex-wrap items-center gap-3 mt-2">
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+                <span className="text-xs text-zinc-500 font-medium">CA:</span>
+                <span className="text-xs text-yellow-400/80 font-mono animate-pulse">即将公布</span>
+              </div>
+              <a
+                href="https://x.com/SEESHOWBNB/articles"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:bg-white/10 backdrop-blur-sm transition-all duration-300 group"
+              >
+                <svg className="w-4 h-4 text-zinc-400 group-hover:text-white transition-colors" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                <span className="text-xs text-zinc-400 group-hover:text-white transition-colors">@SEESHOWBNB</span>
+              </a>
+            </FadeIn>
           </div>
 
           {/* Right Column: Visual/Mockup */}
@@ -88,27 +106,27 @@ export function Hero() {
                         <div className="h-3 w-32 bg-white/10 rounded-full" />
                      </div>
                      <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-white font-mono text-sm">
-                        +150 VIDE
+                        +150 BNB
                      </div>
                   </div>
                 </div>
               </div>
 
               {/* Floating Badge 1 */}
-              <div className="absolute top-[20%] right-[-5%] bg-zinc-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl transform rotate-[12deg] animate-float z-20">
+              <div className="hidden md:block absolute top-[20%] right-[-5%] bg-zinc-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl transform rotate-[12deg] animate-float z-20">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-green-500/20 rounded-lg">
                     <Sparkles className="w-5 h-5 text-green-400" />
                   </div>
                   <div>
                     <div className="text-xs text-zinc-400">创作收益</div>
-                    <div className="text-sm font-bold text-white">+ 2,400.00 VIDE</div>
+                    <div className="text-sm font-bold text-white">+ 2,400.00 BNB</div>
                   </div>
                 </div>
               </div>
 
               {/* Floating Badge 2 */}
-              <div className="absolute bottom-[20%] left-[-5%] bg-zinc-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl transform rotate-[-8deg] animate-float-delayed z-20">
+              <div className="hidden md:block absolute bottom-[20%] left-[-5%] bg-zinc-900/90 backdrop-blur-md border border-white/10 p-4 rounded-2xl shadow-xl transform rotate-[-8deg] animate-float-delayed z-20">
                 <div className="flex items-center gap-3">
                   <div className="p-2 bg-purple-500/20 rounded-lg">
                     <Play className="w-5 h-5 text-purple-400" />

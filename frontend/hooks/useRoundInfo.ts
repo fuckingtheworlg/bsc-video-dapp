@@ -22,28 +22,20 @@ export function useRoundInfo() {
     functionName: 'currentRoundId',
   });
 
-  const { data: roundData } = useReadContract({
+  const { data: roundData, refetch: refetchRound, error: roundError } = useReadContract({
     address: INTERACTION_ADDRESS,
     abi: VideoInteractionABI,
     functionName: 'getRound',
     args: currentRoundId ? [currentRoundId] : undefined,
     query: {
       enabled: !!currentRoundId,
-    }
-  });
-
-  const { data: timeRemaining } = useReadContract({
-    address: INTERACTION_ADDRESS,
-    abi: VideoInteractionABI,
-    functionName: 'timeUntilRoundEnd',
-    query: {
-        refetchInterval: 1000, // Refresh every second
+      refetchInterval: 5000, // Refresh data every 5 seconds
     }
   });
 
   return {
     currentRoundId: currentRoundId as bigint | undefined,
     roundData: roundData as RoundData | undefined,
-    timeRemaining: timeRemaining as bigint | undefined,
+    refetchRound
   };
 }

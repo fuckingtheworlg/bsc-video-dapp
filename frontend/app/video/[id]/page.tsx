@@ -11,8 +11,8 @@ import { zhCN } from "date-fns/locale";
 import { toast } from "sonner";
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { parseAbiItem } from "viem";
 import Link from "next/link";
+import VideoInteractionABI from '@/lib/abis/VideoInteraction.json';
 import { FadeIn } from "@/components/animations/FadeIn";
 
 const INTERACTION_ADDRESS = process.env.NEXT_PUBLIC_INTERACTION_ADDRESS as `0x${string}`;
@@ -49,33 +49,32 @@ export default function VideoPage() {
       }
       try {
         setLoading(true);
-        const logs = await publicClient.getLogs({
-          address: INTERACTION_ADDRESS,
-          event: parseAbiItem('event VideoRegistered(bytes32 indexed videoId, address indexed uploader, string cid, string title, string coverCid, uint256 timestamp)'),
-          fromBlock: BigInt(0),
-          toBlock: 'latest',
-        });
+        // Normalize the video ID to bytes32
+        let videoId = (id as string).toLowerCase();
+        if (!videoId.startsWith('0x')) videoId = '0x' + videoId;
+        videoId = videoId.padEnd(66, '0');
 
-        const normalizeId = (v: string) => {
-          let h = v.toLowerCase();
-          if (!h.startsWith('0x')) h = '0x' + h;
-          return h.padEnd(66, '0');
-        };
-        const targetId = normalizeId(id as string);
-        const found = logs.find((log) => normalizeId(log.args.videoId as string) === targetId);
-        if (found) {
-          setVideo({
-            id: found.args.videoId as string,
-            cid: (found.args as any).cid || '',
-            title: (found.args as any).title || '',
-            coverCid: (found.args as any).coverCid || '',
-            uploader: found.args.uploader as string,
-            likeCount: 0,
-            timestamp: Number((found.args as any).timestamp || 0),
-          });
-        } else {
+        const data = await publicClient.readContract({
+          address: INTERACTION_ADDRESS,
+          abi: VideoInteractionABI,
+          functionName: 'videos',
+          args: [videoId as `0x${string}`],
+        }) as any[];
+
+        // data: [uploader, cid, title, coverCid, timestamp, roundId, likeCount, exists]
+        if (!data[7]) {
           setError("未找到该视频");
+          return;
         }
+        setVideo({
+          id: videoId,
+          uploader: data[0] as string,
+          cid: data[1] as string,
+          title: data[2] as string,
+          coverCid: data[3] as string,
+          likeCount: Number(data[6] || 0),
+          timestamp: Number(data[4] || 0),
+        });
       } catch (err: any) {
         setError(err.message || "加载视频失败");
       } finally {

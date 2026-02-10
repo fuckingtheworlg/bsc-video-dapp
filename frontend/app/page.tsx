@@ -12,6 +12,8 @@ import { useState } from "react";
 import { Hero } from "@/components/Hero";
 import { FeatureShowcase } from "@/components/FeatureShowcase";
 import { RewardPoolMonitor } from "@/components/RewardPoolMonitor";
+import { LiveActivityFeed } from "@/components/LiveActivityFeed";
+import { VideoLeaderboard } from "@/components/VideoLeaderboard";
 import { FadeIn } from "@/components/animations/FadeIn";
 
 export default function Home() {
@@ -42,8 +44,8 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-black text-white">
         <Hero />
-        <div className="container py-12 px-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+        <div className="container mx-auto py-12 px-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="flex flex-col space-y-4">
                 <Skeleton className="h-[220px] w-full rounded-2xl bg-white/5" />
@@ -85,12 +87,11 @@ export default function Home() {
         <RewardPoolMonitor />
       </div>
 
-      <FeatureShowcase />
-      
-      <div id="explore" className="container py-20 px-4 relative">
+      {/* Video List — moved above FeatureShowcase */}
+      <div id="explore" className="container mx-auto py-20 px-4 relative max-w-7xl">
         <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
         
-        <FadeIn className="flex justify-between items-center mb-12">
+        <FadeIn className="flex justify-center items-center mb-12">
           <div className="flex items-center gap-3">
               <div className="p-3 rounded-2xl bg-blue-500/10 border border-blue-500/20 shadow-[0_0_15px_-3px_rgba(59,130,246,0.3)]">
                   <Sparkles className="h-6 w-6 text-blue-400" />
@@ -112,7 +113,7 @@ export default function Home() {
             </p>
           </FadeIn>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8 max-w-7xl mx-auto">
             {videos.map((video: any) => (
               <FadeIn key={video.id}>
                 <VideoCard
@@ -130,6 +131,17 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Activity Feed + Leaderboard — side by side */}
+      <div className="container mx-auto px-4 pb-20 max-w-6xl">
+        <div className="absolute left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className="flex flex-col md:flex-row gap-6">
+          <LiveActivityFeed />
+          <VideoLeaderboard />
+        </div>
+      </div>
+
+      <FeatureShowcase />
     </div>
   );
 }

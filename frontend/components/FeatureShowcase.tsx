@@ -7,11 +7,12 @@ import { FadeIn } from "./animations/FadeIn";
 const features = [
   {
     title: "燃烧上传机制",
-    description: "通过燃烧 50,000 VIDE 代币获取上传许可，有效控制内容质量并减少代币流通量，实现通缩模型。",
+    description: "通过燃烧 50,000 BNB 代币获取上传许可，有效控制内容质量并减少代币流通量，实现通缩模型。",
     icon: Flame,
     className: "md:col-span-2",
     gradient: "from-orange-500/20 to-red-500/20",
     textGradient: "from-orange-400 to-red-400",
+    iconColor: "text-orange-400",
     bg: "bg-orange-500/5"
   },
   {
@@ -21,6 +22,7 @@ const features = [
     className: "md:col-span-1",
     gradient: "from-blue-500/20 to-cyan-500/20",
     textGradient: "from-blue-400 to-cyan-400",
+    iconColor: "text-blue-400",
     bg: "bg-blue-500/5"
   },
   {
@@ -30,6 +32,7 @@ const features = [
     className: "md:col-span-1",
     gradient: "from-yellow-500/20 to-amber-500/20",
     textGradient: "from-yellow-400 to-amber-400",
+    iconColor: "text-yellow-400",
     bg: "bg-yellow-500/5"
   },
   {
@@ -39,6 +42,7 @@ const features = [
     className: "md:col-span-2",
     gradient: "from-purple-500/20 to-pink-500/20",
     textGradient: "from-purple-400 to-pink-400",
+    iconColor: "text-purple-400",
     bg: "bg-purple-500/5"
   }
 ];
@@ -78,8 +82,8 @@ export function FeatureShowcase() {
             
             <div className="relative z-10 flex flex-col h-full justify-between gap-8">
               <div className="flex items-start justify-between">
-                <div className={`w-14 h-14 rounded-2xl bg-white/10 flex items-center justify-center border border-white/10 group-hover:scale-110 transition-transform duration-500 shadow-inner`}>
-                  <feature.icon className={`w-7 h-7 bg-gradient-to-br ${feature.textGradient} bg-clip-text text-transparent stroke-current`} />
+                <div className="group-hover:scale-110 transition-transform duration-500">
+                  <feature.icon className={`w-12 h-12 ${feature.iconColor}`} />
                 </div>
                 {i === 0 && (
                   <div className="px-3 py-1 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-300 text-xs font-medium">
@@ -94,10 +98,10 @@ export function FeatureShowcase() {
               </div>
               
               <div>
-                <h3 className="text-2xl font-bold text-white mb-3 group-hover:text-white transition-colors">
+                <h3 className={`text-2xl font-bold mb-3 bg-gradient-to-r ${feature.textGradient} bg-clip-text text-transparent`}>
                   {feature.title}
                 </h3>
-                <p className="text-zinc-400 leading-relaxed group-hover:text-zinc-200 transition-colors">
+                <p className="text-zinc-400 leading-relaxed group-hover:text-zinc-300 transition-colors text-lg">
                   {feature.description}
                 </p>
               </div>

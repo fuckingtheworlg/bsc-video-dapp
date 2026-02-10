@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { usePublicClient } from 'wagmi';
-import { parseAbiItem } from 'viem';
+import VideoInteractionABI from '@/lib/abis/VideoInteraction.json';
 
 const INTERACTION_ADDRESS = process.env.NEXT_PUBLIC_INTERACTION_ADDRESS as `0x${string}`;
 
@@ -20,51 +20,87 @@ export function useVideos() {
   const [error, setError] = useState<Error | null>(null);
   const publicClient = usePublicClient();
 
-  useEffect(() => {
-    async function fetchVideos() {
-      if (!publicClient || !INTERACTION_ADDRESS) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        
-        // Fetch VideoRegistered events from the contract
-        const logs = await publicClient.getLogs({
-          address: INTERACTION_ADDRESS,
-          event: parseAbiItem('event VideoRegistered(bytes32 indexed videoId, address indexed uploader, string cid, string title, string coverCid, uint256 timestamp)'),
-          fromBlock: BigInt(0),
-          toBlock: 'latest',
-        });
-
-        // Transform logs to video objects
-        const videoList: Video[] = logs.map((log) => ({
-          id: log.args.videoId as string,
-          cid: (log.args as any).cid || '',
-          title: (log.args as any).title || '',
-          coverCid: (log.args as any).coverCid || '',
-          uploader: log.args.uploader as string,
-          likeCount: 0, // Would need separate call to get like count
-          timestamp: Number((log.args as any).timestamp || 0),
-        })).reverse(); // Newest first
-
-        setVideos(videoList);
-        setError(null);
-      } catch (err) {
-        console.error('Error fetching videos:', err);
-        setError(err as Error);
-      } finally {
-        setLoading(false);
-      }
+  const fetchVideos = useCallback(async () => {
+    if (!publicClient || !INTERACTION_ADDRESS) {
+      setLoading(false);
+      return;
     }
 
+    try {
+      setLoading(true);
+
+      // 1. Get current round ID
+      const currentRoundId = await publicClient.readContract({
+        address: INTERACTION_ADDRESS,
+        abi: VideoInteractionABI,
+        functionName: 'currentRoundId',
+      }) as bigint;
+
+      // 2. Collect video IDs from all rounds
+      const allVideoIds = new Set<string>();
+      const roundCount = Number(currentRoundId);
+
+      for (let r = 1; r <= roundCount; r++) {
+        try {
+          const ids = await publicClient.readContract({
+            address: INTERACTION_ADDRESS,
+            abi: VideoInteractionABI,
+            functionName: 'getRoundVideos',
+            args: [BigInt(r)],
+          }) as readonly `0x${string}`[];
+          ids.forEach((id) => allVideoIds.add(id));
+        } catch {
+          // Round may not exist or have no videos
+        }
+      }
+
+      // 3. Fetch full video details from the videos mapping
+      const videoList: Video[] = (await Promise.all(
+        Array.from(allVideoIds).map(async (videoId) => {
+          try {
+            const data = await publicClient.readContract({
+              address: INTERACTION_ADDRESS,
+              abi: VideoInteractionABI,
+              functionName: 'videos',
+              args: [videoId],
+            }) as any[];
+            // data: [uploader, cid, title, coverCid, timestamp, roundId, likeCount, exists]
+            if (!data[7]) return null; // exists == false
+            return {
+              id: videoId,
+              uploader: data[0] as string,
+              cid: data[1] as string,
+              title: data[2] as string,
+              coverCid: data[3] as string,
+              timestamp: Number(data[4] || 0),
+              likeCount: Number(data[6] || 0),
+            };
+          } catch {
+            return null;
+          }
+        })
+      )).filter((v): v is Video => v !== null);
+
+      // 4. Sort by likeCount descending
+      videoList.sort((a, b) => b.likeCount - a.likeCount);
+
+      setVideos(videoList);
+      setError(null);
+    } catch (err) {
+      console.error('Error fetching videos:', err);
+      setError(err as Error);
+    } finally {
+      setLoading(false);
+    }
+  }, [publicClient]);
+
+  useEffect(() => {
     fetchVideos();
     
     // Poll every 30 seconds
     const interval = setInterval(fetchVideos, 30000);
     return () => clearInterval(interval);
-  }, [publicClient]);
+  }, [fetchVideos]);
 
-  return { videos, loading, error, refetch: () => {} };
+  return { videos, loading, error, refetch: fetchVideos };
 }

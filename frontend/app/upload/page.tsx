@@ -213,11 +213,11 @@ export default function UploadPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                 <p className="text-xs text-zinc-500 mb-1">当前余额</p>
-                <p className="text-xl font-bold text-white">{balance.toLocaleString()} <span className="text-sm text-zinc-400">VIDE</span></p>
+                <p className="text-xl font-bold text-white">{balance.toLocaleString()} <span className="text-sm text-zinc-400">BNB</span></p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                 <p className="text-xs text-zinc-500 mb-1">燃烧数量</p>
-                <p className="text-xl font-bold text-orange-400">50,000 <span className="text-sm text-zinc-400">VIDE</span></p>
+                <p className="text-xl font-bold text-orange-400">50,000 <span className="text-sm text-zinc-400">BNB</span></p>
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                 <p className="text-xs text-zinc-500 mb-1">已有许可</p>
@@ -225,14 +225,14 @@ export default function UploadPage() {
               </div>
               <div className="p-4 rounded-2xl bg-white/5 border border-white/5">
                 <p className="text-xs text-zinc-500 mb-1">燃烧后余额</p>
-                <p className="text-xl font-bold text-zinc-300">{Math.max(0, balance - 50000).toLocaleString()} <span className="text-sm text-zinc-400">VIDE</span></p>
+                <p className="text-xl font-bold text-zinc-300">{Math.max(0, balance - 50000).toLocaleString()} <span className="text-sm text-zinc-400">BNB</span></p>
               </div>
             </div>
 
             {balance < 50000 && (
               <div className="flex items-center gap-2 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
                 <Shield className="h-4 w-4 flex-shrink-0" />
-                余额不足，需要至少 50,000 VIDE 才能燃烧
+                余额不足，需要至少 50,000 BNB 才能燃烧
               </div>
             )}
           </CardContent>
@@ -250,7 +250,7 @@ export default function UploadPage() {
               ) : (
                 <>
                   <Flame className="mr-2 h-5 w-5" />
-                  燃烧 50,000 VIDE 获取许可
+                  燃烧 50,000 BNB 获取许可
                 </>
               )}
             </Button>
