@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { useState } from "react";
 
 export default function Home() {
-  const { isConnected } = useAccount();
+  const { address, isConnected } = useAccount();
   const { likeVideo } = useInteraction();
   const { videos, loading, error } = useVideos();
   const [likedVideoIds] = useState<Set<string>>(new Set());
@@ -21,9 +21,14 @@ export default function Home() {
       toast.error("请先连接钱包以点赞视频");
       return;
     }
+    const target = videos.find((v: any) => v.id === id);
+    if (target && address && target.uploader.toLowerCase() === address.toLowerCase()) {
+      toast.warning("不能给自己的视频点赞哦");
+      return;
+    }
     try {
       likeVideo(id);
-      toast.success("点赞交易已提交");
+      toast.info("正在发起点赞交易，请在钱包中确认...");
     } catch (error: any) {
       toast.error(error.message || "点赞失败");
     }

@@ -96,6 +96,10 @@ export default function VideoPage() {
       toast.error("请先连接钱包才能点赞");
       return;
     }
+    if (video && address && video.uploader.toLowerCase() === address.toLowerCase()) {
+      toast.warning("不能给自己的视频点赞哦");
+      return;
+    }
     if (isLiked) {
       toast.warning("您已经点过赞了");
       return;
