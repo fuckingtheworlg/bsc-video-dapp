@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { ConnectButton } from "@rainbow-me/rainbowkit";
-import { Video, Home, User, Upload, Sparkles } from "lucide-react";
+import { Video, Home, User, Upload, Sparkles, Wand2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -12,6 +12,7 @@ export function Navbar() {
 
   const navItems = [
     { name: "首页", href: "/", icon: Home },
+    { name: "AI 创作", href: "/create", icon: Wand2 },
     { name: "个人中心", href: "/profile", icon: User },
   ];
 
