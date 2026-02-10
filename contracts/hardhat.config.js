@@ -19,6 +19,8 @@ module.exports = {
   networks: {
     hardhat: {
       chainId: 31337,
+      gas: 30000000,
+      blockGasLimit: 30000000,
     },
     bscTestnet: {
       url: "https://data-seed-prebsc-1-s1.binance.org:8545/",
