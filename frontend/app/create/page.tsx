@@ -20,6 +20,7 @@ import {
   Film,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FadeIn } from "@/components/animations/FadeIn";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
@@ -348,13 +349,13 @@ export default function CreatePage() {
         </div>
       </div>
     );
-  }
+  }  
 
   // USDT check
   const showUSDTWarning = !usdtLoading && !isEligible;
 
   return (
-    <div className="container py-12 px-4 max-w-4xl">
+    <FadeIn className="container py-12 px-4 max-w-4xl">
       {/* Header */}
       <div className="flex items-center gap-3 mb-8">
         <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
@@ -855,6 +856,6 @@ export default function CreatePage() {
           )}
         </div>
       )}
-    </div>
+    </FadeIn>
   );
 }

@@ -13,6 +13,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { parseAbiItem } from "viem";
 import Link from "next/link";
+import { FadeIn } from "@/components/animations/FadeIn";
 
 const INTERACTION_ADDRESS = process.env.NEXT_PUBLIC_INTERACTION_ADDRESS as `0x${string}`;
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
@@ -121,7 +122,7 @@ export default function VideoPage() {
 
   if (loading) {
     return (
-      <div className="container py-8 px-4 max-w-5xl">
+      <FadeIn className="container py-8 px-4 max-w-5xl">
         <Skeleton className="aspect-video w-full rounded-2xl mb-8 bg-white/5" />
         <div className="space-y-4">
           <Skeleton className="h-8 w-2/3 bg-white/5" />
@@ -130,13 +131,13 @@ export default function VideoPage() {
             <Skeleton className="h-4 w-1/3 bg-white/5" />
           </div>
         </div>
-      </div>
+      </FadeIn>
     );
   }
 
   if (error || !video) {
     return (
-      <div className="container py-20 px-4 flex justify-center">
+      <FadeIn className="container py-20 px-4 flex justify-center">
         <div className="text-center space-y-6 p-12 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm max-w-md">
           <div className="mx-auto w-16 h-16 rounded-full bg-red-500/10 flex items-center justify-center">
             <AlertTriangle className="h-8 w-8 text-red-400" />
@@ -147,7 +148,7 @@ export default function VideoPage() {
             <ArrowLeft className="mr-2 h-4 w-4" /> 返回首页
           </Button>
         </div>
-      </div>
+      </FadeIn>
     );
   }
 
@@ -157,7 +158,7 @@ export default function VideoPage() {
   const shortUploader = `${video.uploader.slice(0, 6)}...${video.uploader.slice(-4)}`;
 
   return (
-    <div className="container py-8 px-4 max-w-5xl">
+    <FadeIn className="container py-8 px-4 max-w-5xl">
       {/* Back Button */}
       <Link href="/" className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-6 group text-sm">
         <ArrowLeft className="h-4 w-4 transition-transform group-hover:-translate-x-1" />
@@ -307,6 +308,6 @@ export default function VideoPage() {
           </div>
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }

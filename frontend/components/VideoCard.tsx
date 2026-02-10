@@ -42,7 +42,7 @@ export function VideoCard({
   const coverUrl = isLocalFile ? `${backendUrl}/api/local-ipfs/${coverCid}` : `${gateway}${coverCid}`;
 
   return (
-    <Card className="overflow-hidden group border-white/5 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1">
+    <Card className="overflow-hidden group border-white/5 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_0_30px_-5px_rgba(255,255,255,0.1)]">
       <div className="relative aspect-video bg-neutral-900 cursor-pointer overflow-hidden">
         {!imgError ? (
             <img 
@@ -59,22 +59,22 @@ export function VideoCard({
         
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
             <Link href={`/video/${id}`}>
-                <Button size="icon" variant="secondary" className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md transition-all duration-300 hover:scale-110">
-                    <Play className="w-6 h-6 ml-1 fill-white" />
+                <Button size="icon" variant="secondary" className="rounded-full w-16 h-16 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md transition-all duration-300 hover:scale-110 shadow-lg shadow-black/20">
+                    <Play className="w-8 h-8 ml-1 fill-white" />
                 </Button>
             </Link>
         </div>
       </div>
 
-      <CardContent className="p-4">
-        <h3 className="font-semibold text-lg line-clamp-1 mb-3 text-white group-hover:text-blue-400 transition-colors" title={title}>{title}</h3>
+      <CardContent className="p-5">
+        <h3 className="font-semibold text-lg line-clamp-1 mb-4 text-white group-hover:text-blue-400 transition-colors" title={title}>{title}</h3>
         <div className="flex items-center gap-3 text-sm text-zinc-400">
-            <Avatar className="w-8 h-8 ring-2 ring-white/10">
+            <Avatar className="w-9 h-9 ring-2 ring-white/10 transition-transform group-hover:scale-105">
                 <AvatarImage src={`https://api.dicebear.com/7.x/identicon/svg?seed=${uploader}`} />
                 <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
             </Avatar>
             <div className="flex flex-col gap-0.5">
-              <span className="text-zinc-300 hover:text-white transition-colors font-medium">
+              <span className="text-zinc-300 hover:text-white transition-colors font-medium cursor-pointer">
                   {shortAddress}
               </span>
               <span className="text-xs text-zinc-500">
@@ -86,19 +86,19 @@ export function VideoCard({
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex justify-between items-center border-t border-white/5 mt-2">
+      <CardFooter className="p-5 pt-0 flex justify-between items-center border-t border-white/5 mt-2">
         <div className="flex items-center gap-1">
           <Button 
               variant="ghost" 
               size="sm" 
-              className={`gap-2 px-2 hover:bg-white/10 transition-colors ${isLiked ? "text-red-500 hover:text-red-400" : "text-zinc-400 hover:text-red-400"}`}
+              className={`gap-2 px-3 hover:bg-white/10 transition-all ${isLiked ? "text-red-500 hover:text-red-400" : "text-zinc-400 hover:text-red-400"}`}
               onClick={(e) => {
                   e.preventDefault();
                   onLike?.(id);
               }}
           >
-              <Heart className={`w-4 h-4 transition-transform active:scale-125 ${isLiked ? "fill-current" : ""}`} />
-              <span className="font-medium">{likeCount}</span>
+              <Heart className={`w-5 h-5 transition-transform active:scale-125 ${isLiked ? "fill-current" : ""}`} />
+              <span className="font-medium text-base">{likeCount}</span>
           </Button>
         </div>
       </CardFooter>

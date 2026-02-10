@@ -11,6 +11,7 @@ import { Flame, Trophy, Heart, Video as VideoIcon, Wallet, History, User, Copy, 
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 import Link from "next/link";
+import { FadeIn } from "@/components/animations/FadeIn";
 
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
@@ -36,7 +37,7 @@ export default function ProfilePage() {
 
   if (!isConnected) {
     return (
-      <div className="container flex items-center justify-center min-h-[70vh]">
+      <FadeIn className="container flex items-center justify-center min-h-[70vh]">
         <div className="text-center space-y-6 p-12 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm max-w-md">
           <div className="mx-auto w-16 h-16 rounded-full bg-blue-500/10 flex items-center justify-center">
             <Wallet className="h-8 w-8 text-blue-400" />
@@ -44,7 +45,7 @@ export default function ProfilePage() {
           <h2 className="text-2xl font-bold text-white">请先连接钱包</h2>
           <p className="text-zinc-400">连接您的钱包后即可查看个人中心</p>
         </div>
-      </div>
+      </FadeIn>
     );
   }
 
@@ -94,7 +95,7 @@ export default function ProfilePage() {
   ];
 
   return (
-    <div className="container py-12 px-4">
+    <FadeIn className="container py-12 px-4">
       <div className="flex flex-col gap-10">
         {/* Profile Header */}
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 p-6 rounded-3xl bg-white/5 border border-white/5 backdrop-blur-sm">
@@ -226,6 +227,6 @@ export default function ProfilePage() {
           )}
         </div>
       </div>
-    </div>
+    </FadeIn>
   );
 }

@@ -13,6 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 import { Loader2, Upload as UploadIcon, Flame, FileVideo, Image as ImageIcon, CheckCircle, ArrowRight, Wallet, Shield } from "lucide-react";
 import { toast } from "sonner";
+import { FadeIn } from "@/components/animations/FadeIn";
 
 const STATUS_MAP: Record<string, string> = {
   signing: "钱包签名中...",
@@ -158,7 +159,7 @@ export default function UploadPage() {
   }
 
   return (
-    <div className="container max-w-3xl py-12 px-4">
+    <FadeIn className="container max-w-3xl py-12 px-4">
       {/* Header */}
       <div className="mb-10">
         <h1 className="text-3xl font-bold bg-gradient-to-r from-white via-blue-100 to-zinc-400 bg-clip-text text-transparent mb-2">
@@ -431,6 +432,6 @@ export default function UploadPage() {
           </CardFooter>
         </Card>
       )}
-    </div>
+    </FadeIn>
   );
 }

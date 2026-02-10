@@ -29,8 +29,13 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning className="dark">
       <body
         suppressHydrationWarning
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background text-foreground bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-black text-foreground relative selection:bg-blue-500/30 selection:text-blue-200`}
       >
+        <div className="fixed inset-0 -z-50 bg-black">
+          <div className="absolute inset-0 bg-[url('/grid.svg')] bg-[size:50px_50px] opacity-20 [mask-image:linear-gradient(to_bottom,white,transparent)]" />
+          <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-blue-500/5 blur-[120px] animate-pulse" />
+          <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-purple-500/5 blur-[120px] animate-pulse delay-1000" />
+        </div>
         <Providers>
           <Navbar />
           <main className="min-h-[calc(100vh-4rem)] relative z-10">
