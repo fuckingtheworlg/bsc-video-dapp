@@ -1,0 +1,92 @@
+type Video @entity {
+  id: Bytes! # videoId (bytes32)
+  cid: String!
+  title: String!
+  coverCid: String!
+  uploader: Bytes! # address
+  timestamp: BigInt!
+  roundId: BigInt!
+  likeCount: BigInt!
+  likes: [Like!]! @derivedFrom(field: "video")
+}
+
+type Like @entity {
+  id: Bytes! # keccak256(videoId + liker)
+  video: Video!
+  liker: Bytes! # address
+  timestamp: BigInt!
+}
+
+type Round @entity {
+  id: ID! # roundId as string
+  roundNumber: BigInt!
+  startTime: BigInt!
+  endTime: BigInt!
+  settled: Boolean!
+  merkleRoot: Bytes
+  rewardPool: BigInt!
+  participantCount: BigInt!
+  topUploaders: [Bytes!]!
+  topLikes: [BigInt!]!
+  winners: [RoundWinner!]! @derivedFrom(field: "round")
+  claims: [RewardClaim!]! @derivedFrom(field: "round")
+}
+
+type RoundWinner @entity {
+  id: ID! # roundId-rank
+  round: Round!
+  rank: Int!
+  uploader: Bytes! # address
+  likes: BigInt!
+  reward: BigInt!
+}
+
+type RewardClaim @entity {
+  id: Bytes! # tx hash
+  round: Round!
+  user: Bytes! # address
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type BurnRecord @entity {
+  id: Bytes! # tx hash
+  user: Bytes! # address
+  amount: BigInt!
+  permitCount: BigInt!
+  timestamp: BigInt!
+}
+
+type LikeBurnRecord @entity {
+  id: Bytes! # tx hash
+  user: Bytes! # address
+  amount: BigInt!
+  timestamp: BigInt!
+}
+
+type UserStats @entity {
+  id: Bytes! # address
+  totalBurned: BigInt!
+  totalRewards: BigInt!
+  totalLikesGiven: BigInt!
+  totalLikesReceived: BigInt!
+  videoCount: BigInt!
+  claimCount: BigInt!
+}
+
+type FeeCollection @entity {
+  id: Bytes! # tx hash
+  rewardAmount: BigInt!
+  marketingAmount: BigInt!
+  timestamp: BigInt!
+}
+
+type ProtocolStats @entity {
+  id: ID! # "global"
+  totalVideos: BigInt!
+  totalLikes: BigInt!
+  totalBurned: BigInt!
+  totalRewardsClaimed: BigInt!
+  totalFeesCollected: BigInt!
+  currentRoundId: BigInt!
+}

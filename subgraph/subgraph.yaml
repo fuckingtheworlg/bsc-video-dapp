@@ -1,0 +1,71 @@
+specVersion: 1.0.0
+indexerHints:
+  prune: auto
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: VideToken
+    network: bsc
+    source:
+      address: "0x0000000000000000000000000000000000000000" # Replace after deployment
+      abi: VideToken
+      startBlock: 0 # Replace with deployment block
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - BurnRecord
+        - LikeBurnRecord
+        - FeeCollection
+        - UserStats
+        - ProtocolStats
+      abis:
+        - name: VideToken
+          file: ./abis/VideToken.json
+      eventHandlers:
+        - event: BurnForUpload(indexed address,uint256,uint256)
+          handler: handleBurnForUpload
+        - event: LikeBurn(indexed address,uint256)
+          handler: handleLikeBurn
+        - event: FeesCollected(uint256,uint256)
+          handler: handleFeesCollected
+        - event: BlacklistUpdated(indexed address,bool)
+          handler: handleBlacklistUpdated
+      file: ./src/token.ts
+
+  - kind: ethereum
+    name: VideoInteraction
+    network: bsc
+    source:
+      address: "0x0000000000000000000000000000000000000000" # Replace after deployment
+      abi: VideoInteraction
+      startBlock: 0 # Replace with deployment block
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.9
+      language: wasm/assemblyscript
+      entities:
+        - Video
+        - Like
+        - Round
+        - RoundWinner
+        - RewardClaim
+        - UserStats
+        - ProtocolStats
+      abis:
+        - name: VideoInteraction
+          file: ./abis/VideoInteraction.json
+      eventHandlers:
+        - event: VideoRegistered(indexed bytes32,indexed address,string,string,string,uint256)
+          handler: handleVideoRegistered
+        - event: VideoLiked(indexed bytes32,indexed address,uint256,uint256)
+          handler: handleVideoLiked
+        - event: RoundSettled(indexed uint256,address[3],uint256[3],uint256,bytes32)
+          handler: handleRoundSettled
+        - event: RewardClaimed(indexed uint256,indexed address,uint256)
+          handler: handleRewardClaimed
+        - event: RoundStarted(indexed uint256,uint256)
+          handler: handleRoundStarted
+      file: ./src/video.ts

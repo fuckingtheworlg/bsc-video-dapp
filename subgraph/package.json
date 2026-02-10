@@ -1,0 +1,16 @@
+{
+  "name": "bsc-dapp-subgraph",
+  "version": "1.0.0",
+  "description": "The Graph subgraph for BSC DApp - Token & Video Interaction indexing",
+  "scripts": {
+    "codegen": "graph codegen",
+    "build": "graph build",
+    "deploy": "graph deploy --node https://api.studio.thegraph.com/deploy/ bsc-dapp-subgraph",
+    "create-local": "graph create --node http://localhost:8020/ bsc-dapp-subgraph",
+    "deploy-local": "graph deploy --node http://localhost:8020/ --ipfs http://localhost:5001 bsc-dapp-subgraph"
+  },
+  "dependencies": {
+    "@graphprotocol/graph-cli": "^0.71.0",
+    "@graphprotocol/graph-ts": "^0.35.0"
+  }
+}
