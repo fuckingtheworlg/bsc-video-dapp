@@ -33,7 +33,8 @@ export default function CreatePage() {
 
   const [activeTab, setActiveTab] = useState<TabType>("image");
   const [prompt, setPrompt] = useState("");
-  const [videoDuration, setVideoDuration] = useState("4");
+  const [videoDuration, setVideoDuration] = useState(5);
+  const [generateAudio, setGenerateAudio] = useState(true);
 
   // Image state
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -48,7 +49,8 @@ export default function CreatePage() {
   // Image-to-video state
   const [i2vImageData, setI2vImageData] = useState<string | null>(null);
   const [i2vPrompt, setI2vPrompt] = useState("");
-  const [i2vDuration, setI2vDuration] = useState("4");
+  const [i2vDuration, setI2vDuration] = useState(5);
+  const [i2vGenerateAudio, setI2vGenerateAudio] = useState(true);
   const [i2vTaskId, setI2vTaskId] = useState<string | null>(null);
   const [i2vStatus, setI2vStatus] = useState<VideoStatus>("idle");
   const [i2vVideoUrl, setI2vVideoUrl] = useState<string | null>(null);
@@ -206,7 +208,7 @@ export default function CreatePage() {
       const res = await fetch(`${BACKEND_URL}/api/ai/video`, {
         method: "POST",
         headers,
-        body: JSON.stringify({ prompt: prompt.trim(), duration: videoDuration }),
+        body: JSON.stringify({ prompt: prompt.trim(), duration: videoDuration, generateAudio }),
       });
 
       const data = await res.json();
@@ -273,6 +275,7 @@ export default function CreatePage() {
           imageUrl: i2vImageData,
           prompt: i2vPrompt.trim(),
           duration: i2vDuration,
+          generateAudio: i2vGenerateAudio,
         }),
       });
 
@@ -423,21 +426,31 @@ export default function CreatePage() {
           </div>
 
           {activeTab === "video" && (
-            <div className="flex items-center gap-3">
-              <span className="text-sm text-zinc-400">视频时长:</span>
-              {["4", "8", "12"].map((d) => (
-                <button
-                  key={d}
-                  onClick={() => setVideoDuration(d)}
-                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                    videoDuration === d
-                      ? "bg-pink-500/10 text-pink-400 border border-pink-500/20"
-                      : "text-zinc-400 hover:text-white bg-white/5 border border-white/5"
-                  }`}
-                >
-                  {d}秒
-                </button>
-              ))}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-zinc-400">视频时长: <span className="text-pink-400 font-mono font-bold">{videoDuration}秒</span></span>
+              </div>
+              <input
+                type="range"
+                min={4}
+                max={12}
+                step={1}
+                value={videoDuration}
+                onChange={(e) => setVideoDuration(Number(e.target.value))}
+                className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-pink-500"
+              />
+              <div className="flex justify-between text-xs text-zinc-600">
+                <span>4秒</span><span>8秒</span><span>12秒</span>
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={generateAudio}
+                  onChange={(e) => setGenerateAudio(e.target.checked)}
+                  className="w-4 h-4 rounded accent-pink-500"
+                />
+                <span className="text-sm text-zinc-400">生成音频（有声视频）</span>
+              </label>
             </div>
           )}
 
@@ -529,21 +542,31 @@ export default function CreatePage() {
             />
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-zinc-400">视频时长:</span>
-            {["4", "8", "12"].map((d) => (
-              <button
-                key={d}
-                onClick={() => setI2vDuration(d)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  i2vDuration === d
-                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
-                    : "text-zinc-400 hover:text-white bg-white/5 border border-white/5"
-                }`}
-              >
-                {d}秒
-              </button>
-            ))}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-zinc-400">视频时长: <span className="text-cyan-400 font-mono font-bold">{i2vDuration}秒</span></span>
+            </div>
+            <input
+              type="range"
+              min={4}
+              max={12}
+              step={1}
+              value={i2vDuration}
+              onChange={(e) => setI2vDuration(Number(e.target.value))}
+              className="w-full h-2 rounded-full appearance-none cursor-pointer bg-white/10 accent-cyan-500"
+            />
+            <div className="flex justify-between text-xs text-zinc-600">
+              <span>4秒</span><span>8秒</span><span>12秒</span>
+            </div>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={i2vGenerateAudio}
+                onChange={(e) => setI2vGenerateAudio(e.target.checked)}
+                className="w-4 h-4 rounded accent-cyan-500"
+              />
+              <span className="text-sm text-zinc-400">生成音频（有声视频）</span>
+            </label>
           </div>
 
           <Button

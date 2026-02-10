@@ -1,9 +1,14 @@
 const logger = require("../utils/logger");
 
+// Image generation via yunjintao (gemini)
 const AI_API_BASE_URL = process.env.AI_API_BASE_URL || "https://api.yunjintao.com";
 const AI_API_KEY = process.env.AI_API_KEY || "";
 const AI_IMAGE_MODEL = process.env.AI_IMAGE_MODEL || "gemini-3-pro-image-preview";
-const AI_VIDEO_MODEL = process.env.AI_VIDEO_MODEL || "sora-2";
+
+// Video generation via Volcengine Seedance
+const VOLC_API_BASE = process.env.VOLCENGINE_API_BASE || "https://ark.cn-beijing.volces.com/api/v3";
+const VOLC_API_KEY = process.env.VOLCENGINE_API_KEY || "";
+const VOLC_VIDEO_MODEL = process.env.VOLCENGINE_VIDEO_MODEL || "doubao-seedance-1-5-pro-251215";
 
 /**
  * Generate image via /v1/chat/completions (multimodal model like gemini)
@@ -103,146 +108,183 @@ async function generateImage(prompt) {
 }
 
 /**
- * Submit video generation task via /v1/videos
+ * Submit text-to-video task via Volcengine Seedance API
  * @param {string} prompt - Text prompt for video generation
- * @param {string} duration - Duration: "4", "8", or "12" seconds
+ * @param {number} duration - Duration in seconds (4-12)
+ * @param {object} options - Optional: { generateAudio, ratio, resolution }
  * @returns {Promise<{taskId: string}>}
  */
-async function submitVideoTask(prompt, duration = "4") {
-  const url = `${AI_API_BASE_URL}/v1/videos`;
+async function submitVideoTask(prompt, duration = 5, options = {}) {
+  const url = `${VOLC_API_BASE}/contents/generations/tasks`;
 
   const body = {
-    model: AI_VIDEO_MODEL,
-    prompt: prompt,
-    duration: duration,
+    model: VOLC_VIDEO_MODEL,
+    content: [
+      { type: "text", text: prompt },
+    ],
+    resolution: options.resolution || "720p",
+    ratio: options.ratio || "16:9",
+    duration: Number(duration),
   };
 
-  logger.info(`[AI] submitVideoTask: model=${AI_VIDEO_MODEL}, duration=${duration}s, prompt="${prompt.slice(0, 80)}..."`);
+  // Seedance 1.5 pro supports audio generation
+  if (options.generateAudio !== undefined) {
+    body.generate_audio = options.generateAudio;
+  }
+
+  logger.info(`[Seedance] submitVideoTask: model=${VOLC_VIDEO_MODEL}, duration=${duration}s, prompt="${prompt.slice(0, 80)}..."`);
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${AI_API_KEY}`,
+      Authorization: `Bearer ${VOLC_API_KEY}`,
     },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    logger.error(`[AI] submitVideoTask failed: ${res.status} ${errText}`);
-    throw new Error(`AI 文生视频请求失败 (${res.status}): ${errText}`);
+    logger.error(`[Seedance] submitVideoTask failed: ${res.status} ${errText}`);
+    throw new Error(`视频生成请求失败 (${res.status}): ${errText}`);
   }
 
   const data = await res.json();
 
-  // Extract task ID from response
-  const taskId = data.id || data.task_id || data.data?.id;
+  const taskId = data.id;
   if (!taskId) {
-    logger.warn("[AI] No task ID in video response:", JSON.stringify(data).slice(0, 500));
+    logger.warn("[Seedance] No task ID in response:", JSON.stringify(data).slice(0, 500));
     throw new Error("未能获取视频生成任务 ID");
   }
 
-  logger.info(`[AI] submitVideoTask success, taskId: ${taskId}`);
+  logger.info(`[Seedance] submitVideoTask success, taskId: ${taskId}`);
   return { taskId };
 }
 
 /**
- * Submit image-to-video generation task via /v1/videos
+ * Submit image-to-video task via Volcengine Seedance API (first_frame mode)
  * @param {string} imageUrl - URL or base64 data URI of the source image
  * @param {string} prompt - Optional text prompt to guide the video
- * @param {string} duration - Duration: "4", "8", or "12" seconds
+ * @param {number} duration - Duration in seconds (4-12)
+ * @param {object} options - Optional: { generateAudio, ratio, resolution }
  * @returns {Promise<{taskId: string}>}
  */
-async function submitImageToVideoTask(imageUrl, prompt = "", duration = "4") {
-  const url = `${AI_API_BASE_URL}/v1/videos`;
+async function submitImageToVideoTask(imageUrl, prompt = "", duration = 5, options = {}) {
+  const url = `${VOLC_API_BASE}/contents/generations/tasks`;
+
+  const content = [];
+
+  // Add text prompt if provided
+  if (prompt) {
+    content.push({ type: "text", text: prompt });
+  }
+
+  // Add image as first_frame
+  content.push({
+    type: "image_url",
+    image_url: { url: imageUrl },
+    role: "first_frame",
+  });
 
   const body = {
-    model: AI_VIDEO_MODEL,
-    prompt: prompt || "将这张图片生成为视频",
-    duration: duration,
-    image: imageUrl,
+    model: VOLC_VIDEO_MODEL,
+    content,
+    resolution: options.resolution || "720p",
+    duration: Number(duration),
   };
 
-  logger.info(`[AI] submitImageToVideoTask: model=${AI_VIDEO_MODEL}, duration=${duration}s, prompt="${(prompt || "").slice(0, 80)}"`);
+  // Seedance 1.5 pro supports audio generation
+  if (options.generateAudio !== undefined) {
+    body.generate_audio = options.generateAudio;
+  }
+
+  logger.info(`[Seedance] submitImageToVideoTask: model=${VOLC_VIDEO_MODEL}, duration=${duration}s, prompt="${(prompt || "").slice(0, 80)}"`);
 
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${AI_API_KEY}`,
+      Authorization: `Bearer ${VOLC_API_KEY}`,
     },
     body: JSON.stringify(body),
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    logger.error(`[AI] submitImageToVideoTask failed: ${res.status} ${errText}`);
-    throw new Error(`AI 图生视频请求失败 (${res.status}): ${errText}`);
+    logger.error(`[Seedance] submitImageToVideoTask failed: ${res.status} ${errText}`);
+    throw new Error(`图生视频请求失败 (${res.status}): ${errText}`);
   }
 
   const data = await res.json();
 
-  const taskId = data.id || data.task_id || data.data?.id;
+  const taskId = data.id;
   if (!taskId) {
-    logger.warn("[AI] No task ID in img2video response:", JSON.stringify(data).slice(0, 500));
+    logger.warn("[Seedance] No task ID in img2video response:", JSON.stringify(data).slice(0, 500));
     throw new Error("未能获取图生视频任务 ID");
   }
 
-  logger.info(`[AI] submitImageToVideoTask success, taskId: ${taskId}`);
+  logger.info(`[Seedance] submitImageToVideoTask success, taskId: ${taskId}`);
   return { taskId };
 }
 
 /**
- * Check video generation task status
+ * Check video generation task status via Volcengine Seedance API
+ * Volcengine statuses: queued, running, succeeded, failed, expired
  * @param {string} taskId - Task ID from submitVideoTask
  * @returns {Promise<{status: string, videoUrl?: string, progress?: number}>}
  */
 async function getVideoTaskStatus(taskId) {
-  const url = `${AI_API_BASE_URL}/v1/videos/${taskId}`;
+  const url = `${VOLC_API_BASE}/contents/generations/tasks/${taskId}`;
 
   const res = await fetch(url, {
     method: "GET",
     headers: {
-      Authorization: `Bearer ${AI_API_KEY}`,
+      Authorization: `Bearer ${VOLC_API_KEY}`,
     },
   });
 
   if (!res.ok) {
     const errText = await res.text();
-    logger.error(`[AI] getVideoTaskStatus failed: ${res.status} ${errText}`);
+    logger.error(`[Seedance] getVideoTaskStatus failed: ${res.status} ${errText}`);
     throw new Error(`查询视频任务状态失败 (${res.status})`);
   }
 
   const data = await res.json();
 
-  // Normalize status
-  const rawStatus = data.status || data.state || "unknown";
+  // Volcengine status mapping: queued, running, succeeded, failed, expired
+  const rawStatus = (data.status || "unknown").toLowerCase();
   let status = "pending";
-  if (["completed", "succeeded", "success", "done"].includes(rawStatus.toLowerCase())) {
+  if (rawStatus === "succeeded") {
     status = "completed";
-  } else if (["failed", "error"].includes(rawStatus.toLowerCase())) {
+  } else if (rawStatus === "failed" || rawStatus === "expired") {
     status = "failed";
-  } else if (["processing", "running", "in_progress"].includes(rawStatus.toLowerCase())) {
+  } else if (rawStatus === "running") {
     status = "processing";
+  } else if (rawStatus === "queued") {
+    status = "pending";
   }
 
-  // Extract video URL if completed
+  // Extract video URL from content array if succeeded
   let videoUrl = null;
-  if (status === "completed") {
-    videoUrl =
-      data.video?.url ||
-      data.output?.url ||
-      data.result?.url ||
-      data.data?.url ||
-      (Array.isArray(data.data) && data.data[0]?.url) ||
-      null;
+  if (status === "completed" && Array.isArray(data.content)) {
+    for (const item of data.content) {
+      if (item.type === "video_url" && item.video_url?.url) {
+        videoUrl = item.video_url.url;
+        break;
+      }
+    }
   }
+  // Fallback: check video_url at top level
+  if (!videoUrl && status === "completed") {
+    videoUrl = data.video_url?.url || data.video?.url || null;
+  }
+
+  logger.info(`[Seedance] taskStatus: id=${taskId}, status=${rawStatus}, hasVideo=${!!videoUrl}`);
 
   return {
     status,
     videoUrl,
-    progress: data.progress || data.percent || 0,
+    progress: data.progress || 0,
     raw: data,
   };
 }

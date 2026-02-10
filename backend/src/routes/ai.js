@@ -125,25 +125,26 @@ router.post("/image", verifySignature, checkEligibility, async (req, res) => {
 
 /**
  * POST /api/ai/video
- * Body: { prompt: string, duration?: "4" | "8" | "12" }
+ * Body: { prompt: string, duration?: 4-12, generateAudio?: boolean }
  * Headers: X-Wallet-Address, X-Signature, X-Message
  */
 router.post("/video", verifySignature, checkEligibility, async (req, res) => {
   try {
-    const { prompt, duration = "4" } = req.body;
+    const { prompt, duration = 5, generateAudio } = req.body;
     if (!prompt || typeof prompt !== "string" || prompt.trim().length === 0) {
       return res.status(400).json({ error: "请输入提示词" });
     }
     if (prompt.length > 2000) {
       return res.status(400).json({ error: "提示词过长，最多 2000 字" });
     }
-    if (!["4", "8", "12"].includes(String(duration))) {
-      return res.status(400).json({ error: "时长参数无效，仅支持 4、8、12 秒" });
+    const dur = Number(duration);
+    if (!Number.isInteger(dur) || dur < 4 || dur > 12) {
+      return res.status(400).json({ error: "时长参数无效，支持 4-12 秒整数" });
     }
 
-    logger.info(`[AI Route] Video generation by ${req.walletAddress}: duration=${duration}s, "${prompt.slice(0, 80)}..."`);
+    logger.info(`[AI Route] Video generation by ${req.walletAddress}: duration=${dur}s, "${prompt.slice(0, 80)}..."`);
 
-    const result = await submitVideoTask(prompt.trim(), String(duration));
+    const result = await submitVideoTask(prompt.trim(), dur, { generateAudio });
 
     // Set cooldown after successful submission
     setCooldown(req.walletAddress);
@@ -161,25 +162,26 @@ router.post("/video", verifySignature, checkEligibility, async (req, res) => {
 
 /**
  * POST /api/ai/img2video
- * Body: { imageUrl: string, prompt?: string, duration?: "4" | "8" | "12" }
+ * Body: { imageUrl: string, prompt?: string, duration?: 4-12, generateAudio?: boolean }
  * Headers: X-Wallet-Address, X-Signature, X-Message
  */
 router.post("/img2video", verifySignature, checkEligibility, async (req, res) => {
   try {
-    const { imageUrl, prompt = "", duration = "4" } = req.body;
+    const { imageUrl, prompt = "", duration = 5, generateAudio } = req.body;
     if (!imageUrl || typeof imageUrl !== "string") {
       return res.status(400).json({ error: "请提供图片" });
     }
     if (prompt && prompt.length > 2000) {
       return res.status(400).json({ error: "提示词过长，最多 2000 字" });
     }
-    if (!["4", "8", "12"].includes(String(duration))) {
-      return res.status(400).json({ error: "时长参数无效，仅支持 4、8、12 秒" });
+    const dur = Number(duration);
+    if (!Number.isInteger(dur) || dur < 4 || dur > 12) {
+      return res.status(400).json({ error: "时长参数无效，支持 4-12 秒整数" });
     }
 
-    logger.info(`[AI Route] Img2Video by ${req.walletAddress}: duration=${duration}s`);
+    logger.info(`[AI Route] Img2Video by ${req.walletAddress}: duration=${dur}s`);
 
-    const result = await submitImageToVideoTask(imageUrl, prompt.trim(), String(duration));
+    const result = await submitImageToVideoTask(imageUrl, prompt.trim(), dur, { generateAudio });
 
     setCooldown(req.walletAddress);
 
