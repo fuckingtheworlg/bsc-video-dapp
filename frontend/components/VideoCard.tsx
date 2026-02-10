@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Heart, Play, User } from "lucide-react";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
+import { zhCN } from "date-fns/locale";
 import { useState } from "react";
 
 interface VideoCardProps {
@@ -41,58 +42,65 @@ export function VideoCard({
   const coverUrl = isLocalFile ? `${backendUrl}/api/local-ipfs/${coverCid}` : `${gateway}${coverCid}`;
 
   return (
-    <Card className="overflow-hidden group hover:border-primary/50 transition-all duration-300">
-      <div className="relative aspect-video bg-muted cursor-pointer overflow-hidden">
+    <Card className="overflow-hidden group border-white/5 bg-white/5 backdrop-blur-sm hover:bg-white/10 hover:border-white/20 transition-all duration-300 hover:-translate-y-1">
+      <div className="relative aspect-video bg-neutral-900 cursor-pointer overflow-hidden">
         {!imgError ? (
             <img 
               src={coverUrl} 
               alt={title}
-              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+              className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-700"
               onError={() => setImgError(true)}
             />
         ) : (
-            <div className="flex items-center justify-center w-full h-full bg-neutral-800">
-                <Play className="w-12 h-12 text-muted-foreground" />
+            <div className="flex items-center justify-center w-full h-full bg-neutral-900">
+                <Play className="w-12 h-12 text-white/20" />
             </div>
         )}
         
-        <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center backdrop-blur-[2px]">
             <Link href={`/video/${id}`}>
-                <Button size="icon" variant="secondary" className="rounded-full w-12 h-12">
-                    <Play className="w-5 h-5 ml-1" />
+                <Button size="icon" variant="secondary" className="rounded-full w-14 h-14 bg-white/10 hover:bg-white/20 border border-white/20 text-white backdrop-blur-md transition-all duration-300 hover:scale-110">
+                    <Play className="w-6 h-6 ml-1 fill-white" />
                 </Button>
             </Link>
         </div>
       </div>
 
       <CardContent className="p-4">
-        <h3 className="font-semibold text-lg line-clamp-1 mb-2" title={title}>{title}</h3>
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Avatar className="w-6 h-6">
+        <h3 className="font-semibold text-lg line-clamp-1 mb-3 text-white group-hover:text-blue-400 transition-colors" title={title}>{title}</h3>
+        <div className="flex items-center gap-3 text-sm text-zinc-400">
+            <Avatar className="w-8 h-8 ring-2 ring-white/10">
                 <AvatarImage src={`https://api.dicebear.com/7.x/identicon/svg?seed=${uploader}`} />
-                <AvatarFallback><User className="w-3 h-3" /></AvatarFallback>
+                <AvatarFallback><User className="w-4 h-4" /></AvatarFallback>
             </Avatar>
-            <span className="hover:text-foreground transition-colors">
-                {shortAddress}
-            </span>
-            <span>•</span>
-            <span>{timestamp > 1000000 ? formatDistanceToNow(timestamp * 1000, { addSuffix: true }) : "Just now"}</span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-zinc-300 hover:text-white transition-colors font-medium">
+                  {shortAddress}
+              </span>
+              <span className="text-xs text-zinc-500">
+                {timestamp > 1000000 
+                  ? formatDistanceToNow(timestamp * 1000, { addSuffix: true, locale: zhCN }) 
+                  : "刚刚"}
+              </span>
+            </div>
         </div>
       </CardContent>
 
-      <CardFooter className="p-4 pt-0 flex justify-between items-center">
-        <Button 
-            variant="ghost" 
-            size="sm" 
-            className={`gap-2 hover:text-red-500 ${isLiked ? "text-red-500" : "text-muted-foreground"}`}
-            onClick={(e) => {
-                e.preventDefault();
-                onLike?.(id);
-            }}
-        >
-            <Heart className={`w-4 h-4 ${isLiked ? "fill-current" : ""}`} />
-            {likeCount}
-        </Button>
+      <CardFooter className="p-4 pt-0 flex justify-between items-center border-t border-white/5 mt-2">
+        <div className="flex items-center gap-1">
+          <Button 
+              variant="ghost" 
+              size="sm" 
+              className={`gap-2 px-2 hover:bg-white/10 transition-colors ${isLiked ? "text-red-500 hover:text-red-400" : "text-zinc-400 hover:text-red-400"}`}
+              onClick={(e) => {
+                  e.preventDefault();
+                  onLike?.(id);
+              }}
+          >
+              <Heart className={`w-4 h-4 transition-transform active:scale-125 ${isLiked ? "fill-current" : ""}`} />
+              <span className="font-medium">{likeCount}</span>
+          </Button>
+        </div>
       </CardFooter>
     </Card>
   );
