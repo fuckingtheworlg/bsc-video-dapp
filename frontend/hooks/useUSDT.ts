@@ -2,6 +2,7 @@ import { useReadContract, useAccount } from 'wagmi';
 import { formatUnits } from 'viem';
 
 const USDT_ADDRESS = process.env.NEXT_PUBLIC_USDT_ADDRESS as `0x${string}`;
+const SKIP_BALANCE_CHECK = process.env.NEXT_PUBLIC_SKIP_BALANCE_CHECK === 'true';
 
 // Minimal ERC-20 ABI for balanceOf
 const ERC20_BALANCE_ABI = [
@@ -28,13 +29,13 @@ export function useUSDT() {
   });
 
   const balanceFormatted = balance ? parseFloat(formatUnits(balance, 18)) : 0;
-  const isEligible = balanceFormatted >= 20;
+  const isEligible = SKIP_BALANCE_CHECK ? true : balanceFormatted >= 20;
 
   return {
     balance: balanceFormatted,
     balanceRaw: balance as bigint | undefined,
     isEligible,
-    isLoading,
+    isLoading: SKIP_BALANCE_CHECK ? false : isLoading,
     refetch,
   };
 }

@@ -16,12 +16,14 @@ import {
   AlertTriangle,
   Sparkles,
   RefreshCw,
+  Upload,
+  Film,
 } from "lucide-react";
 import { toast } from "sonner";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
 
-type TabType = "image" | "video";
+type TabType = "image" | "video" | "img2video";
 type VideoStatus = "idle" | "submitting" | "processing" | "completed" | "failed";
 
 export default function CreatePage() {
@@ -42,6 +44,15 @@ export default function CreatePage() {
   const [videoStatus, setVideoStatus] = useState<VideoStatus>("idle");
   const [videoUrl, setVideoUrl] = useState<string | null>(null);
   const [videoProgress, setVideoProgress] = useState(0);
+
+  // Image-to-video state
+  const [i2vImageData, setI2vImageData] = useState<string | null>(null);
+  const [i2vPrompt, setI2vPrompt] = useState("");
+  const [i2vDuration, setI2vDuration] = useState("4");
+  const [i2vTaskId, setI2vTaskId] = useState<string | null>(null);
+  const [i2vStatus, setI2vStatus] = useState<VideoStatus>("idle");
+  const [i2vVideoUrl, setI2vVideoUrl] = useState<string | null>(null);
+  const [i2vProgress, setI2vProgress] = useState(0);
 
   // Cooldown state
   const [cooldownSec, setCooldownSec] = useState(0);
@@ -79,25 +90,41 @@ export default function CreatePage() {
     return () => clearInterval(timer);
   }, [cooldownSec]);
 
-  // Poll video task status
+  // Poll video task status (shared for text2video and img2video)
   useEffect(() => {
-    if (!videoTaskId || videoStatus !== "processing") return;
+    const taskId = videoTaskId || i2vTaskId;
+    const status = videoTaskId ? videoStatus : i2vStatus;
+    if (!taskId || status !== "processing") return;
 
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`${BACKEND_URL}/api/ai/video/status/${videoTaskId}`);
+        const res = await fetch(`${BACKEND_URL}/api/ai/video/status/${taskId}`);
         const data = await res.json();
-        setVideoProgress(data.progress || 0);
 
-        if (data.status === "completed" && data.videoUrl) {
-          setVideoUrl(data.videoUrl);
-          setVideoStatus("completed");
-          toast.success("视频生成完成！");
-          clearInterval(interval);
-        } else if (data.status === "failed") {
-          setVideoStatus("failed");
-          toast.error("视频生成失败，请重试");
-          clearInterval(interval);
+        if (videoTaskId) {
+          setVideoProgress(data.progress || 0);
+          if (data.status === "completed" && data.videoUrl) {
+            setVideoUrl(data.videoUrl);
+            setVideoStatus("completed");
+            toast.success("视频生成完成！");
+            clearInterval(interval);
+          } else if (data.status === "failed") {
+            setVideoStatus("failed");
+            toast.error("视频生成失败，请重试");
+            clearInterval(interval);
+          }
+        } else {
+          setI2vProgress(data.progress || 0);
+          if (data.status === "completed" && data.videoUrl) {
+            setI2vVideoUrl(data.videoUrl);
+            setI2vStatus("completed");
+            toast.success("图生视频完成！");
+            clearInterval(interval);
+          } else if (data.status === "failed") {
+            setI2vStatus("failed");
+            toast.error("图生视频失败，请重试");
+            clearInterval(interval);
+          }
         }
       } catch {
         // keep polling
@@ -105,7 +132,7 @@ export default function CreatePage() {
     }, 5000);
 
     return () => clearInterval(interval);
-  }, [videoTaskId, videoStatus]);
+  }, [videoTaskId, videoStatus, i2vTaskId, i2vStatus]);
 
   // Sign message helper
   const getAuthHeaders = async () => {
@@ -144,7 +171,7 @@ export default function CreatePage() {
         if (data.code === "COOLDOWN") {
           setCooldownSec(data.cooldownRemaining);
           toast.warning(data.error);
-        } else if (data.code === "INSUFFICIENT_USDT") {
+        } else if (data.code === "INSUFFICIENT_BALANCE") {
           toast.error(data.error);
         } else {
           toast.error(data.error || "图片生成失败");
@@ -188,7 +215,7 @@ export default function CreatePage() {
         if (data.code === "COOLDOWN") {
           setCooldownSec(data.cooldownRemaining);
           toast.warning(data.error);
-        } else if (data.code === "INSUFFICIENT_USDT") {
+        } else if (data.code === "INSUFFICIENT_BALANCE") {
           toast.error(data.error);
         } else {
           toast.error(data.error || "视频任务提交失败");
@@ -202,6 +229,73 @@ export default function CreatePage() {
       toast.success("视频任务已提交，正在生成中...");
     } catch (error: any) {
       setVideoStatus("idle");
+      toast.error("提交失败: " + (error.message || "未知错误"));
+    }
+  };
+
+  // Handle image upload for img2video
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      toast.warning("请选择图片文件");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.warning("图片大小不能超过 10MB");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      setI2vImageData(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Generate video from image
+  const handleImg2Video = async () => {
+    if (!i2vImageData) {
+      toast.warning("请先上传图片");
+      return;
+    }
+    try {
+      setI2vStatus("submitting");
+      setI2vVideoUrl(null);
+      setI2vProgress(0);
+      toast.info("正在签名验证身份...");
+      const headers = await getAuthHeaders();
+
+      toast.info("正在提交图生视频任务...");
+      const res = await fetch(`${BACKEND_URL}/api/ai/img2video`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          imageUrl: i2vImageData,
+          prompt: i2vPrompt.trim(),
+          duration: i2vDuration,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        setI2vStatus("idle");
+        if (data.code === "COOLDOWN") {
+          setCooldownSec(data.cooldownRemaining);
+          toast.warning(data.error);
+        } else if (data.code === "INSUFFICIENT_BALANCE") {
+          toast.error(data.error);
+        } else {
+          toast.error(data.error || "图生视频任务提交失败");
+        }
+        return;
+      }
+
+      setI2vTaskId(data.taskId);
+      setI2vStatus("processing");
+      setCooldownSec(data.cooldownRemaining || 600);
+      toast.success("图生视频任务已提交，正在生成中...");
+    } catch (error: any) {
+      setI2vStatus("idle");
       toast.error("提交失败: " + (error.message || "未知错误"));
     }
   };
@@ -250,9 +344,9 @@ export default function CreatePage() {
         <div className="mb-6 p-4 rounded-2xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-yellow-400 flex-shrink-0" />
           <div>
-            <p className="text-yellow-300 font-medium">USDT 余额不足</p>
+            <p className="text-yellow-300 font-medium">余额不足</p>
             <p className="text-yellow-400/70 text-sm">
-              当前 USDT 余额: {usdtBalance.toFixed(2)}，需要至少 20 USDT 才能使用 AI 创作
+              需要持有 ≥20 USDT 或等值 ≥20U 的 BNB 才能使用 AI 创作
             </p>
           </div>
         </div>
@@ -295,38 +389,155 @@ export default function CreatePage() {
           <Video className="h-4 w-4" />
           文生视频
         </button>
+        <button
+          onClick={() => setActiveTab("img2video")}
+          className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-medium transition-all duration-300 ${
+            activeTab === "img2video"
+              ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
+              : "text-zinc-400 hover:text-white hover:bg-white/5 border border-transparent"
+          }`}
+        >
+          <Film className="h-4 w-4" />
+          图生视频
+        </button>
       </div>
 
-      {/* Input Area */}
-      <div className="space-y-4 mb-8">
-        <div className="relative">
-          <textarea
-            value={prompt}
-            onChange={(e) => setPrompt(e.target.value)}
-            placeholder={
-              activeTab === "image"
-                ? "描述你想生成的图片，例如：一只在星空下奔跑的白色独角兽..."
-                : "描述你想生成的视频，例如：海浪拍打沙滩的慢镜头..."
-            }
-            className="w-full h-32 p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-zinc-500 resize-none focus:outline-none focus:border-purple-500/30 focus:ring-1 focus:ring-purple-500/20 transition-all"
-            maxLength={2000}
-          />
-          <span className="absolute bottom-3 right-3 text-xs text-zinc-600">
-            {prompt.length}/2000
-          </span>
-        </div>
+      {/* Input Area - Text-to-Image / Text-to-Video */}
+      {(activeTab === "image" || activeTab === "video") && (
+        <div className="space-y-4 mb-8">
+          <div className="relative">
+            <textarea
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              placeholder={
+                activeTab === "image"
+                  ? "描述你想生成的图片，例如：一只在星空下奔跑的白色独角兽..."
+                  : "描述你想生成的视频，例如：海浪拍打沙滩的慢镜头..."
+              }
+              className="w-full h-32 p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-zinc-500 resize-none focus:outline-none focus:border-purple-500/30 focus:ring-1 focus:ring-purple-500/20 transition-all"
+              maxLength={2000}
+            />
+            <span className="absolute bottom-3 right-3 text-xs text-zinc-600">
+              {prompt.length}/2000
+            </span>
+          </div>
 
-        {/* Video Duration Selector */}
-        {activeTab === "video" && (
+          {activeTab === "video" && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-zinc-400">视频时长:</span>
+              {["4", "8", "12"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setVideoDuration(d)}
+                  className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                    videoDuration === d
+                      ? "bg-pink-500/10 text-pink-400 border border-pink-500/20"
+                      : "text-zinc-400 hover:text-white bg-white/5 border border-white/5"
+                  }`}
+                >
+                  {d}秒
+                </button>
+              ))}
+            </div>
+          )}
+
+          <Button
+            onClick={activeTab === "image" ? handleGenerateImage : handleGenerateVideo}
+            disabled={
+              imageLoading ||
+              videoStatus === "submitting" ||
+              videoStatus === "processing" ||
+              cooldownSec > 0 ||
+              showUSDTWarning ||
+              !prompt.trim()
+            }
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-0 font-medium text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {imageLoading || videoStatus === "submitting" ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                {activeTab === "image" ? "图片生成中..." : "任务提交中..."}
+              </>
+            ) : cooldownSec > 0 ? (
+              <>
+                <Clock className="h-5 w-5 mr-2" />
+                冷却中 {formatCooldown(cooldownSec)}
+              </>
+            ) : showUSDTWarning ? (
+              <>
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                余额不足，无法使用
+              </>
+            ) : (
+              <>
+                <Sparkles className="h-5 w-5 mr-2" />
+                {activeTab === "image" ? "生成图片" : "生成视频"}
+              </>
+            )}
+          </Button>
+        </div>
+      )}
+
+      {/* Input Area - Image-to-Video */}
+      {activeTab === "img2video" && (
+        <div className="space-y-4 mb-8">
+          {/* Image Upload */}
+          <div
+            className={`relative rounded-2xl border-2 border-dashed transition-all ${
+              i2vImageData
+                ? "border-cyan-500/30 bg-cyan-500/5"
+                : "border-white/10 bg-white/5 hover:border-cyan-500/20"
+            } p-4`}
+          >
+            {i2vImageData ? (
+              <div className="relative">
+                <img
+                  src={i2vImageData}
+                  alt="上传的图片"
+                  className="w-full max-h-64 object-contain rounded-xl"
+                />
+                <button
+                  onClick={() => setI2vImageData(null)}
+                  className="absolute top-2 right-2 p-1.5 rounded-lg bg-black/60 text-white hover:bg-black/80 transition-all text-xs"
+                >
+                  更换图片
+                </button>
+              </div>
+            ) : (
+              <label className="flex flex-col items-center justify-center py-10 cursor-pointer">
+                <Upload className="h-10 w-10 text-zinc-500 mb-3" />
+                <p className="text-zinc-400 text-sm">点击上传图片</p>
+                <p className="text-zinc-600 text-xs mt-1">支持 JPG、PNG、WebP，最大 10MB</p>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                  className="hidden"
+                />
+              </label>
+            )}
+          </div>
+
+          {/* Optional prompt */}
+          <div className="relative">
+            <textarea
+              value={i2vPrompt}
+              onChange={(e) => setI2vPrompt(e.target.value)}
+              placeholder="可选：描述视频动作方向，例如：镜头缓慢推进，花朵绽放..."
+              className="w-full h-20 p-4 rounded-2xl bg-white/5 border border-white/10 text-white placeholder:text-zinc-500 resize-none focus:outline-none focus:border-cyan-500/30 focus:ring-1 focus:ring-cyan-500/20 transition-all"
+              maxLength={2000}
+            />
+          </div>
+
           <div className="flex items-center gap-3">
             <span className="text-sm text-zinc-400">视频时长:</span>
             {["4", "8", "12"].map((d) => (
               <button
                 key={d}
-                onClick={() => setVideoDuration(d)}
+                onClick={() => setI2vDuration(d)}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  videoDuration === d
-                    ? "bg-pink-500/10 text-pink-400 border border-pink-500/20"
+                  i2vDuration === d
+                    ? "bg-cyan-500/10 text-cyan-400 border border-cyan-500/20"
                     : "text-zinc-400 hover:text-white bg-white/5 border border-white/5"
                 }`}
               >
@@ -334,44 +545,42 @@ export default function CreatePage() {
               </button>
             ))}
           </div>
-        )}
 
-        {/* Generate Button */}
-        <Button
-          onClick={activeTab === "image" ? handleGenerateImage : handleGenerateVideo}
-          disabled={
-            imageLoading ||
-            videoStatus === "submitting" ||
-            videoStatus === "processing" ||
-            cooldownSec > 0 ||
-            showUSDTWarning ||
-            !prompt.trim()
-          }
-          className="w-full h-12 rounded-xl bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white border-0 font-medium text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {imageLoading || videoStatus === "submitting" ? (
-            <>
-              <Loader2 className="h-5 w-5 animate-spin mr-2" />
-              {activeTab === "image" ? "图片生成中..." : "任务提交中..."}
-            </>
-          ) : cooldownSec > 0 ? (
-            <>
-              <Clock className="h-5 w-5 mr-2" />
-              冷却中 {formatCooldown(cooldownSec)}
-            </>
-          ) : showUSDTWarning ? (
-            <>
-              <AlertTriangle className="h-5 w-5 mr-2" />
-              USDT 不足，无法使用
-            </>
-          ) : (
-            <>
-              <Sparkles className="h-5 w-5 mr-2" />
-              {activeTab === "image" ? "生成图片" : "生成视频"}
-            </>
-          )}
-        </Button>
-      </div>
+          <Button
+            onClick={handleImg2Video}
+            disabled={
+              i2vStatus === "submitting" ||
+              i2vStatus === "processing" ||
+              cooldownSec > 0 ||
+              showUSDTWarning ||
+              !i2vImageData
+            }
+            className="w-full h-12 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0 font-medium text-base transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {i2vStatus === "submitting" ? (
+              <>
+                <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                任务提交中...
+              </>
+            ) : cooldownSec > 0 ? (
+              <>
+                <Clock className="h-5 w-5 mr-2" />
+                冷却中 {formatCooldown(cooldownSec)}
+              </>
+            ) : showUSDTWarning ? (
+              <>
+                <AlertTriangle className="h-5 w-5 mr-2" />
+                余额不足，无法使用
+              </>
+            ) : (
+              <>
+                <Film className="h-5 w-5 mr-2" />
+                图片生成视频
+              </>
+            )}
+          </Button>
+        </div>
+      )}
 
       {/* Results Area */}
       {activeTab === "image" && (
@@ -507,6 +716,93 @@ export default function CreatePage() {
             <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
               <Video className="h-12 w-12 text-zinc-600 mb-4" />
               <p className="text-zinc-500">输入提示词后点击生成，AI 视频将在这里展示</p>
+              <p className="text-xs text-zinc-600 mt-2">支持 4秒 / 8秒 / 12秒，720p 分辨率</p>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activeTab === "img2video" && (
+        <div>
+          {(i2vStatus === "submitting" || i2vStatus === "processing") && (
+            <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-white/5">
+              <Loader2 className="h-12 w-12 text-cyan-400 animate-spin mb-4" />
+              <p className="text-zinc-300 font-medium mb-1">
+                {i2vStatus === "submitting" ? "正在提交任务..." : "图生视频中..."}
+              </p>
+              {i2vStatus === "processing" && (
+                <div className="w-48 mt-3">
+                  <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full transition-all duration-500"
+                      style={{ width: `${Math.max(i2vProgress, 10)}%` }}
+                    />
+                  </div>
+                  <p className="text-xs text-zinc-500 mt-2 text-center">
+                    {i2vProgress > 0 ? `${i2vProgress}%` : "请耐心等待，视频生成需要一些时间..."}
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {i2vStatus === "completed" && i2vVideoUrl && (
+            <div className="space-y-4">
+              <div className="rounded-2xl overflow-hidden bg-black border border-white/5">
+                <video controls className="w-full" src={i2vVideoUrl}>
+                  您的浏览器不支持视频播放。
+                </video>
+              </div>
+              <div className="flex gap-3">
+                <a
+                  href={i2vVideoUrl}
+                  download="ai-img2video.mp4"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 text-white hover:bg-white/20 transition-all text-sm"
+                >
+                  <Download className="h-4 w-4" />
+                  下载视频
+                </a>
+                <Button
+                  variant="ghost"
+                  className="text-zinc-400 hover:text-white"
+                  onClick={() => {
+                    setI2vVideoUrl(null);
+                    setI2vTaskId(null);
+                    setI2vStatus("idle");
+                    setI2vImageData(null);
+                    setI2vPrompt("");
+                  }}
+                >
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  重新创作
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {i2vStatus === "failed" && (
+            <div className="flex flex-col items-center justify-center py-20 bg-red-500/5 rounded-3xl border border-red-500/10">
+              <AlertTriangle className="h-12 w-12 text-red-400 mb-4" />
+              <p className="text-red-300 font-medium mb-2">图生视频失败</p>
+              <Button
+                variant="ghost"
+                className="text-zinc-400 hover:text-white"
+                onClick={() => {
+                  setI2vStatus("idle");
+                  setI2vTaskId(null);
+                }}
+              >
+                重试
+              </Button>
+            </div>
+          )}
+
+          {i2vStatus === "idle" && (
+            <div className="flex flex-col items-center justify-center py-20 bg-white/5 rounded-3xl border border-dashed border-white/10">
+              <Film className="h-12 w-12 text-zinc-600 mb-4" />
+              <p className="text-zinc-500">上传图片后点击生成，AI 将把图片转为视频</p>
               <p className="text-xs text-zinc-600 mt-2">支持 4秒 / 8秒 / 12秒，720p 分辨率</p>
             </div>
           )}

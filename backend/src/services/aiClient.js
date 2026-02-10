@@ -148,6 +148,52 @@ async function submitVideoTask(prompt, duration = "4") {
 }
 
 /**
+ * Submit image-to-video generation task via /v1/videos
+ * @param {string} imageUrl - URL or base64 data URI of the source image
+ * @param {string} prompt - Optional text prompt to guide the video
+ * @param {string} duration - Duration: "4", "8", or "12" seconds
+ * @returns {Promise<{taskId: string}>}
+ */
+async function submitImageToVideoTask(imageUrl, prompt = "", duration = "4") {
+  const url = `${AI_API_BASE_URL}/v1/videos`;
+
+  const body = {
+    model: AI_VIDEO_MODEL,
+    prompt: prompt || "将这张图片生成为视频",
+    duration: duration,
+    image: imageUrl,
+  };
+
+  logger.info(`[AI] submitImageToVideoTask: model=${AI_VIDEO_MODEL}, duration=${duration}s, prompt="${(prompt || "").slice(0, 80)}"`);
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${AI_API_KEY}`,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!res.ok) {
+    const errText = await res.text();
+    logger.error(`[AI] submitImageToVideoTask failed: ${res.status} ${errText}`);
+    throw new Error(`AI 图生视频请求失败 (${res.status}): ${errText}`);
+  }
+
+  const data = await res.json();
+
+  const taskId = data.id || data.task_id || data.data?.id;
+  if (!taskId) {
+    logger.warn("[AI] No task ID in img2video response:", JSON.stringify(data).slice(0, 500));
+    throw new Error("未能获取图生视频任务 ID");
+  }
+
+  logger.info(`[AI] submitImageToVideoTask success, taskId: ${taskId}`);
+  return { taskId };
+}
+
+/**
  * Check video generation task status
  * @param {string} taskId - Task ID from submitVideoTask
  * @returns {Promise<{status: string, videoUrl?: string, progress?: number}>}
@@ -201,4 +247,4 @@ async function getVideoTaskStatus(taskId) {
   };
 }
 
-module.exports = { generateImage, submitVideoTask, getVideoTaskStatus };
+module.exports = { generateImage, submitVideoTask, submitImageToVideoTask, getVideoTaskStatus };

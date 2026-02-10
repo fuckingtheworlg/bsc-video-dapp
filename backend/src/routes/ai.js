@@ -1,6 +1,6 @@
 const express = require("express");
 const { verifySignature } = require("../middleware/auth");
-const { generateImage, submitVideoTask, getVideoTaskStatus } = require("../services/aiClient");
+const { generateImage, submitVideoTask, submitImageToVideoTask, getVideoTaskStatus } = require("../services/aiClient");
 const { checkUSDTBalance } = require("../services/usdtCheck");
 const logger = require("../utils/logger");
 
@@ -9,12 +9,14 @@ const router = express.Router();
 // In-memory cooldown map: wallet -> last use timestamp (ms)
 const cooldownMap = new Map();
 const COOLDOWN_MS = 10 * 60 * 1000; // 10 minutes
+const SKIP_COOLDOWN = process.env.SKIP_COOLDOWN === "true";
 
 /**
  * Check cooldown for a wallet
  * @returns {{ onCooldown: boolean, remainingMs: number }}
  */
 function checkCooldown(wallet) {
+  if (SKIP_COOLDOWN) return { onCooldown: false, remainingMs: 0 };
   const key = wallet.toLowerCase();
   const lastUse = cooldownMap.get(key);
   if (!lastUse) return { onCooldown: false, remainingMs: 0 };
@@ -31,6 +33,7 @@ function checkCooldown(wallet) {
  * Set cooldown for a wallet (called after successful generation)
  */
 function setCooldown(wallet) {
+  if (SKIP_COOLDOWN) return;
   cooldownMap.set(wallet.toLowerCase(), Date.now());
 }
 
@@ -42,12 +45,14 @@ async function checkEligibility(req, res, next) {
     const wallet = req.walletAddress;
 
     // Check USDT balance
-    const { eligible, balance } = await checkUSDTBalance(wallet);
+    const { eligible, usdtBalance, bnbBalance, bnbValueUsd } = await checkUSDTBalance(wallet);
     if (!eligible) {
       return res.status(403).json({
-        error: `USDT 余额不足，当前 ${balance} USDT，需要至少 20 USDT`,
-        code: "INSUFFICIENT_USDT",
-        balance,
+        error: `余额不足：需要持有 ≥20 USDT 或等值 ≥20U 的 BNB。当前 USDT: ${usdtBalance}, BNB: ${bnbBalance} (≈$${bnbValueUsd})`,
+        code: "INSUFFICIENT_BALANCE",
+        usdtBalance,
+        bnbBalance,
+        bnbValueUsd,
       });
     }
 
@@ -151,6 +156,41 @@ router.post("/video", verifySignature, checkEligibility, async (req, res) => {
   } catch (error) {
     logger.error("[AI Route] Video generation failed:", error.message);
     res.status(500).json({ error: error.message || "视频生成失败" });
+  }
+});
+
+/**
+ * POST /api/ai/img2video
+ * Body: { imageUrl: string, prompt?: string, duration?: "4" | "8" | "12" }
+ * Headers: X-Wallet-Address, X-Signature, X-Message
+ */
+router.post("/img2video", verifySignature, checkEligibility, async (req, res) => {
+  try {
+    const { imageUrl, prompt = "", duration = "4" } = req.body;
+    if (!imageUrl || typeof imageUrl !== "string") {
+      return res.status(400).json({ error: "请提供图片" });
+    }
+    if (prompt && prompt.length > 2000) {
+      return res.status(400).json({ error: "提示词过长，最多 2000 字" });
+    }
+    if (!["4", "8", "12"].includes(String(duration))) {
+      return res.status(400).json({ error: "时长参数无效，仅支持 4、8、12 秒" });
+    }
+
+    logger.info(`[AI Route] Img2Video by ${req.walletAddress}: duration=${duration}s`);
+
+    const result = await submitImageToVideoTask(imageUrl, prompt.trim(), String(duration));
+
+    setCooldown(req.walletAddress);
+
+    res.json({
+      success: true,
+      taskId: result.taskId,
+      cooldownRemaining: COOLDOWN_MS / 1000,
+    });
+  } catch (error) {
+    logger.error("[AI Route] Img2Video failed:", error.message);
+    res.status(500).json({ error: error.message || "图生视频失败" });
   }
 });
 
