@@ -34,7 +34,7 @@ export function useVideos() {
         const logs = await publicClient.getLogs({
           address: INTERACTION_ADDRESS,
           event: parseAbiItem('event VideoRegistered(bytes32 indexed videoId, address indexed uploader, string cid, string title, string coverCid, uint256 timestamp)'),
-          fromBlock: 0n,
+          fromBlock: BigInt(0),
           toBlock: 'latest',
         });
 
