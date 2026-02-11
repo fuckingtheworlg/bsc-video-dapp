@@ -104,9 +104,10 @@ export default function VideoPage() {
       toast.warning("您已经点过赞了");
       return;
     }
+    if (!video) return;
     try {
       toast.info("正在发起点赞交易，请在钱包中确认...");
-      likeVideo(id as string);
+      likeVideo(video.id);
     } catch (error: any) {
       toast.error("点赞失败: " + (error.message || "未知错误"));
     }

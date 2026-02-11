@@ -14,8 +14,8 @@ async function main() {
   console.log("\n--- Deploying VideToken ---");
   const VideToken = await ethers.getContractFactory("VideToken");
   const token = await VideToken.deploy(
-    "VideToken",        // name
-    "VIDE",             // symbol
+    "SEESHOW",          // name
+    "SEESHOW",          // symbol
     rewardPoolAddress,
     marketingPoolAddress,
     initialHolderAddress

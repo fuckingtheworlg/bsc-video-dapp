@@ -6,7 +6,8 @@ import { useState } from "react";
 
 export function Footer() {
   const [copied, setCopied] = useState(false);
-  const contractAddress = "TBA"; // 待公布
+  const tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "";
+  const contractAddress = tokenAddress && tokenAddress !== "0x0000000000000000000000000000000000000000" ? tokenAddress : "TBA";
 
   const handleCopy = () => {
     if (contractAddress === "TBA") return;
@@ -76,7 +77,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="mt-10 pt-6 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
-          <p className="text-xs text-zinc-600">© 2025 SEESHOW. All rights reserved.</p>
+          <p className="text-xs text-zinc-600">© 2026 SEESHOW. All rights reserved.</p>
           <p className="text-xs text-zinc-600">Built on BNB Smart Chain</p>
         </div>
       </div>

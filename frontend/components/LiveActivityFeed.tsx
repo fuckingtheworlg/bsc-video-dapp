@@ -1,6 +1,6 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Activity, Upload, Heart, Clock } from "lucide-react";
 import { FadeIn } from "./animations/FadeIn";
 

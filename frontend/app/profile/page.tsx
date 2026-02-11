@@ -2,6 +2,7 @@
 
 import { useAccount } from "wagmi";
 import { useToken } from "@/hooks/useToken";
+import { useTokenSymbol } from "@/hooks/useTokenSymbol";
 import { useVideos } from "@/hooks/useVideos";
 import { VideoCard } from "@/components/VideoCard";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -16,6 +17,7 @@ import { FadeIn } from "@/components/animations/FadeIn";
 export default function ProfilePage() {
   const { address, isConnected } = useAccount();
   const { balance, burnPermitCount, holdingBonus } = useToken();
+  const tokenSymbol = useTokenSymbol();
   const { videos: allVideos, loading: videosLoading } = useVideos();
   const [activeTab, setActiveTab] = useState("videos");
   const [copied, setCopied] = useState(false);
@@ -55,7 +57,7 @@ export default function ProfilePage() {
     {
       label: "代币余额",
       value: balance.toLocaleString(),
-      unit: "BNB",
+      unit: tokenSymbol,
       sub: `持仓加成 +${holdingBonus}%`,
       icon: Wallet,
       color: "text-blue-400",

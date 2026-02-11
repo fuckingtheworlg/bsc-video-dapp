@@ -7,7 +7,7 @@ import { FadeIn } from "./animations/FadeIn";
 const features = [
   {
     title: "燃烧上传机制",
-    description: "通过燃烧 50,000 BNB 代币获取上传许可，有效控制内容质量并减少代币流通量，实现通缩模型。",
+    description: "通过燃烧 50,000 SEESHOW 代币获取上传许可，有效控制内容质量并减少代币流通量，实现通缩模型。",
     icon: Flame,
     className: "md:col-span-2",
     gradient: "from-orange-500/20 to-red-500/20",

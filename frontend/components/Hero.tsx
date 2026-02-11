@@ -106,7 +106,7 @@ export function Hero() {
                         <div className="h-3 w-32 bg-white/10 rounded-full" />
                      </div>
                      <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/10 text-white font-mono text-sm">
-                        +150 BNB
+                        +150 SEESHOW
                      </div>
                   </div>
                 </div>
@@ -120,7 +120,7 @@ export function Hero() {
                   </div>
                   <div>
                     <div className="text-xs text-zinc-400">创作收益</div>
-                    <div className="text-sm font-bold text-white">+ 2,400.00 BNB</div>
+                    <div className="text-sm font-bold text-white">+ 2,400.00 SEESHOW</div>
                   </div>
                 </div>
               </div>
