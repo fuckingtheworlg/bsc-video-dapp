@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useAccount, useSignMessage } from "wagmi";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useToken } from "@/hooks/useToken";
 import { useTokenSymbol } from "@/hooks/useTokenSymbol";
 import { useInteraction } from "@/hooks/useInteraction";
@@ -25,6 +25,7 @@ const STATUS_MAP: Record<string, string> = {
 
 export default function UploadPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { burnPermitCount, balance, burnForUpload, isPending: isBurnPending, isConfirming: isBurnConfirming } = useToken();
@@ -38,8 +39,38 @@ export default function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [status, setStatus] = useState("");
   const [step, setStep] = useState(1); // 1=burn, 2=upload
+  const [aiLoading, setAiLoading] = useState(false);
   const videoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
+
+  // Import AI-generated video from create page
+  useEffect(() => {
+    if (searchParams.get("from") !== "ai") return;
+    const aiUrl = localStorage.getItem("ai_video_url");
+    const aiTitle = localStorage.getItem("ai_video_title");
+    if (!aiUrl) return;
+
+    setAiLoading(true);
+    if (aiTitle) setTitle(aiTitle);
+    setStep(2); // Skip burn step for AI content
+
+    fetch(aiUrl)
+      .then((res) => res.blob())
+      .then((blob) => {
+        const file = new File([blob], "ai-video.mp4", { type: "video/mp4" });
+        setVideoFile(file);
+        setAutoCover(true);
+        toast.success("AI 视频已导入，填写标题后即可上传");
+      })
+      .catch(() => {
+        toast.error("导入 AI 视频失败，请手动选择文件");
+      })
+      .finally(() => {
+        setAiLoading(false);
+        localStorage.removeItem("ai_video_url");
+        localStorage.removeItem("ai_video_title");
+      });
+  }, [searchParams]);
 
   useEffect(() => {
     if (burnPermitCount > 0) setStep(2);

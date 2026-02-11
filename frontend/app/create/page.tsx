@@ -20,6 +20,7 @@ import {
   Film,
 } from "lucide-react";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 import { FadeIn } from "@/components/animations/FadeIn";
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001";
@@ -31,6 +32,7 @@ export default function CreatePage() {
   const { address, isConnected } = useAccount();
   const { signMessageAsync } = useSignMessage();
   const { balance: usdtBalance, isEligible, isLoading: usdtLoading } = useUSDT();
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState<TabType>("image");
   const [prompt, setPrompt] = useState("");
@@ -663,6 +665,18 @@ export default function CreatePage() {
                   下载图片
                 </a>
                 <Button
+                  className="bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white border-0"
+                  onClick={() => {
+                    setI2vImageData(imageUrl);
+                    setI2vPrompt(prompt);
+                    setActiveTab("img2video");
+                    toast.info("已将图片加载到「图生视频」，可直接生成视频后上传");
+                  }}
+                >
+                  <Film className="h-4 w-4 mr-2" />
+                  转为视频
+                </Button>
+                <Button
                   variant="ghost"
                   className="text-zinc-400 hover:text-white"
                   onClick={() => {
@@ -717,6 +731,17 @@ export default function CreatePage() {
                 </video>
               </div>
               <div className="flex gap-3">
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-0"
+                  onClick={() => {
+                    localStorage.setItem("ai_video_url", videoUrl!);
+                    localStorage.setItem("ai_video_title", prompt.slice(0, 50));
+                    router.push("/upload?from=ai");
+                  }}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  上传作品
+                </Button>
                 <a
                   href={videoUrl}
                   download="ai-generated-video.mp4"
@@ -802,6 +827,17 @@ export default function CreatePage() {
                 </video>
               </div>
               <div className="flex gap-3">
+                <Button
+                  className="bg-gradient-to-r from-blue-600 to-cyan-600 hover:from-blue-500 hover:to-cyan-500 text-white border-0"
+                  onClick={() => {
+                    localStorage.setItem("ai_video_url", i2vVideoUrl!);
+                    localStorage.setItem("ai_video_title", i2vPrompt.slice(0, 50) || "AI 图生视频");
+                    router.push("/upload?from=ai");
+                  }}
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  上传作品
+                </Button>
                 <a
                   href={i2vVideoUrl}
                   download="ai-img2video.mp4"
