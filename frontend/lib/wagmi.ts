@@ -43,8 +43,8 @@ export const config = createConfig({
   connectors,
   chains: [bscTestnet, bsc],
   transports: {
-    [bscTestnet.id]: http(),
-    [bsc.id]: http(),
+    [bscTestnet.id]: http('https://data-seed-prebsc-1-s1.binance.org:8545'),
+    [bsc.id]: http('https://bsc-dataseed1.binance.org'),
   },
   ssr: true,
 });

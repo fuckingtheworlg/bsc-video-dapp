@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, Suspense } from "react";
 import { useAccount, useSignMessage } from "wagmi";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useToken } from "@/hooks/useToken";
@@ -24,6 +24,18 @@ const STATUS_MAP: Record<string, string> = {
 };
 
 export default function UploadPage() {
+  return (
+    <Suspense fallback={
+      <div className="container flex items-center justify-center min-h-[70vh]">
+        <Loader2 className="h-8 w-8 text-blue-400 animate-spin" />
+      </div>
+    }>
+      <UploadPageContent />
+    </Suspense>
+  );
+}
+
+function UploadPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { address, isConnected } = useAccount();

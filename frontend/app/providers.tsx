@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import {
   RainbowKitProvider,
   darkTheme,
@@ -14,16 +15,34 @@ import '@rainbow-me/rainbowkit/styles.css';
 
 const queryClient = new QueryClient();
 
-export function Providers({ children }: { children: React.ReactNode }) {
+function Web3Provider({ children }: { children: React.ReactNode }) {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) {
+    return <>{children}</>;
+  }
+
   return (
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
-        <ApolloProvider client={client}>
-          <RainbowKitProvider theme={darkTheme()}>
-            {children}
-          </RainbowKitProvider>
-        </ApolloProvider>
+        <RainbowKitProvider theme={darkTheme()}>
+          {children}
+        </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
+  );
+}
+
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <ApolloProvider client={client}>
+      <Web3Provider>
+        {children}
+      </Web3Provider>
+    </ApolloProvider>
   );
 }
