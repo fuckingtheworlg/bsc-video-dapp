@@ -11,8 +11,8 @@ const VIDEO_INTERACTION_ABI = [
 ];
 
 // BNB reward distribution config
-const BNB_REWARD_PERCENT = parseInt(process.env.BNB_REWARD_PERCENT || "80"); // % of wallet BNB to distribute each round
-const BNB_REWARD_SPLIT = [50, 30, 20]; // Top 1/2/3 split percentages
+const BNB_REWARD_PERCENT = parseInt(process.env.BNB_REWARD_PERCENT || "100"); // % of available BNB as the pool base
+const BNB_REWARD_SPLIT = [25, 15, 10]; // Top 1/2/3 fixed split (total 50%, rest stays in wallet)
 const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
 const MIN_BNB_RESERVE = ethers.parseEther("0.01"); // Keep minimum for gas fees
 
