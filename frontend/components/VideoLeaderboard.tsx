@@ -13,13 +13,7 @@ interface LeaderboardItem {
   likeCount: number;
 }
 
-const mockLeaderboard: LeaderboardItem[] = [
-  { rank: 1, title: "giao!", uploader: "0xed0b...7424", coverGradient: "from-orange-500 to-red-500", likePercent: 18.18, likeCount: 342 },
-  { rank: 2, title: "华山论剑", uploader: "0x5c18...07e0", coverGradient: "from-blue-500 to-cyan-500", likePercent: 16.36, likeCount: 308 },
-  { rank: 3, title: "你告诉我2025", uploader: "0x5201...d00e", coverGradient: "from-purple-500 to-pink-500", likePercent: 14.55, likeCount: 274 },
-  { rank: 4, title: "CZ开着小汽车", uploader: "0xa3f2...9b12", coverGradient: "from-green-500 to-emerald-500", likePercent: 12.73, likeCount: 240 },
-  { rank: 5, title: "区块链的未来", uploader: "0x8e71...c4a8", coverGradient: "from-yellow-500 to-orange-500", likePercent: 10.91, likeCount: 206 },
-];
+const mockLeaderboard: LeaderboardItem[] = [];
 
 function RankBadge({ rank }: { rank: number }) {
   if (rank === 1) return <Crown className="w-5 h-5 text-yellow-400 drop-shadow-[0_0_6px_rgba(250,204,21,0.5)]" />;
@@ -46,6 +40,12 @@ export function VideoLeaderboard() {
 
           {/* Leaderboard List */}
           <div className="divide-y divide-white/5">
+            {mockLeaderboard.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+                <Trophy className="w-8 h-8 mb-3 opacity-30" />
+                <p className="text-sm">暂无排名，等待更多作品</p>
+              </div>
+            )}
             {mockLeaderboard.map((item, index) => (
               <motion.div
                 key={item.rank}

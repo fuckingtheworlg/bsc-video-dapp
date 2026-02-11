@@ -12,18 +12,7 @@ interface ActivityItem {
   timeAgo: string;
 }
 
-const mockActivities: ActivityItem[] = [
-  { id: 1, type: "like", address: "0x7c84...3df7", title: "giao!", timeAgo: "1分钟前" },
-  { id: 2, type: "upload", address: "0xed0b...7424", title: "giao!", timeAgo: "2分钟前" },
-  { id: 3, type: "like", address: "0xa3f2...9b12", title: "华山论剑", timeAgo: "3分钟前" },
-  { id: 4, type: "like", address: "0x2d9f...e531", title: "giao!", timeAgo: "4分钟前" },
-  { id: 5, type: "upload", address: "0x5c18...07e0", title: "华山论剑", timeAgo: "5分钟前" },
-  { id: 6, type: "like", address: "0xf1b3...a092", title: "你告诉我2025", timeAgo: "7分钟前" },
-  { id: 7, type: "like", address: "0x8e71...c4a8", title: "CZ开着小汽车", timeAgo: "9分钟前" },
-  { id: 8, type: "upload", address: "0x5201...d00e", title: "你告诉我2025", timeAgo: "12分钟前" },
-  { id: 9, type: "like", address: "0x3b22...f8c1", title: "华山论剑", timeAgo: "15分钟前" },
-  { id: 10, type: "like", address: "0x91d4...2a67", title: "giao!", timeAgo: "18分钟前" },
-];
+const mockActivities: ActivityItem[] = [];
 
 export function LiveActivityFeed() {
   return (
@@ -43,6 +32,12 @@ export function LiveActivityFeed() {
 
           {/* Activity List */}
           <div className="divide-y divide-white/5 max-h-[420px] overflow-y-auto scrollbar-hide">
+            {mockActivities.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-zinc-500">
+                <Activity className="w-8 h-8 mb-3 opacity-30" />
+                <p className="text-sm">暂无动态，等待第一位创作者</p>
+              </div>
+            )}
             {mockActivities.map((item, index) => (
               <motion.div
                 key={item.id}
