@@ -17,5 +17,8 @@ export function useTokenSymbol() {
     },
   });
 
-  return (symbol as string) || 'SEESHOW';
+  const raw = symbol as string;
+  // Override stale symbol from old contract deployment
+  if (!raw || raw === 'VIDE') return 'SEESHOW';
+  return raw;
 }

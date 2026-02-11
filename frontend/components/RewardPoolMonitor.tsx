@@ -1,7 +1,6 @@
 "use client";
 
 import { useRoundInfo } from "@/hooks/useRoundInfo";
-import { useTokenSymbol } from "@/hooks/useTokenSymbol";
 import { FadeIn } from "./animations/FadeIn";
 import { Coins, Clock, Users, Trophy } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -9,7 +8,6 @@ import { formatEther } from "viem";
 
 export function RewardPoolMonitor() {
   const { roundData, currentRoundId } = useRoundInfo();
-  const tokenSymbol = useTokenSymbol();
   const [timeLeft, setTimeLeft] = useState<string>("--:--");
   const [progress, setProgress] = useState(0);
 
@@ -60,7 +58,7 @@ export function RewardPoolMonitor() {
                 <h3 className="text-zinc-400 text-sm font-medium mb-1">当前轮次奖励池</h3>
                 <div className="text-4xl font-bold text-white tracking-tight flex items-baseline gap-2">
                   {poolAmount}
-                  <span className="text-lg text-zinc-500 font-normal">{tokenSymbol}</span>
+                  <span className="text-lg text-zinc-500 font-normal">BNB</span>
                 </div>
               </div>
             </div>
