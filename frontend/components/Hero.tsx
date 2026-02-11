@@ -61,9 +61,24 @@ export function Hero() {
 
             {/* CA + Twitter Banner */}
             <FadeIn delay={0.5} className="flex flex-wrap items-center gap-3 mt-2">
-              <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm">
+              <div
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm cursor-pointer hover:bg-white/10 transition-all"
+                onClick={() => {
+                  const ca = process.env.NEXT_PUBLIC_TOKEN_CA || "";
+                  if (ca) {
+                    navigator.clipboard.writeText(ca);
+                  }
+                }}
+                title={process.env.NEXT_PUBLIC_TOKEN_CA || "即将公布"}
+              >
                 <span className="text-xs text-zinc-500 font-medium">CA:</span>
-                <span className="text-xs text-yellow-400/80 font-mono animate-pulse">即将公布</span>
+                {process.env.NEXT_PUBLIC_TOKEN_CA ? (
+                  <span className="text-xs text-yellow-400/80 font-mono">
+                    {process.env.NEXT_PUBLIC_TOKEN_CA.slice(0, 6)}...{process.env.NEXT_PUBLIC_TOKEN_CA.slice(-4)}
+                  </span>
+                ) : (
+                  <span className="text-xs text-yellow-400/80 font-mono animate-pulse">即将公布</span>
+                )}
               </div>
               <a
                 href="https://x.com/SEESHOWBNB/articles"
