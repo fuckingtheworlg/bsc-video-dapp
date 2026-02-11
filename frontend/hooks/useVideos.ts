@@ -87,7 +87,7 @@ export function useVideos() {
       setVideos(videoList);
       setError(null);
     } catch (err) {
-      console.error('Error fetching videos:', err);
+      // Error fetching videos
       setError(err as Error);
     } finally {
       setLoading(false);

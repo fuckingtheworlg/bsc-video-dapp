@@ -57,9 +57,17 @@ export default function UploadPage() {
       setUploadProgress(100);
       setStatus("done");
       toast.success("视频注册成功！即将跳转首页...");
+      // Consume one burn permit after successful upload
+      if (address) {
+        fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3001"}/api/permit/use`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ wallet: address }),
+        }).catch(() => {});
+      }
       setTimeout(() => router.push("/"), 2000);
     }
-  }, [status, isRegisterConfirmed, router]);
+  }, [status, isRegisterConfirmed, router, address]);
 
   useEffect(() => {
     if (status === "registering" && registerError) {
@@ -139,7 +147,7 @@ export default function UploadPage() {
       registerVideo(videoCid, title, coverCid);
       
     } catch (error: any) {
-      console.error(error);
+      // Upload error handled by toast below
       toast.error(error.message || "上传失败");
       setStatus("");
       setUploadProgress(0);

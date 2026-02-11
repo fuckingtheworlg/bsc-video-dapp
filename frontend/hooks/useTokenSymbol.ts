@@ -1,7 +1,16 @@
 import { useReadContract } from 'wagmi';
-import VideTokenABI from '@/lib/abis/VideToken.json';
 
 const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`;
+
+const SYMBOL_ABI = [
+  {
+    name: 'symbol',
+    type: 'function',
+    stateMutability: 'view',
+    inputs: [],
+    outputs: [{ name: '', type: 'string' }],
+  },
+] as const;
 
 /**
  * Auto-read token symbol from contract.
@@ -10,15 +19,12 @@ const TOKEN_ADDRESS = process.env.NEXT_PUBLIC_TOKEN_ADDRESS as `0x${string}`;
 export function useTokenSymbol() {
   const { data: symbol } = useReadContract({
     address: TOKEN_ADDRESS,
-    abi: VideTokenABI,
+    abi: SYMBOL_ABI,
     functionName: 'symbol',
     query: {
       enabled: !!TOKEN_ADDRESS && TOKEN_ADDRESS !== '0x0000000000000000000000000000000000000000',
     },
   });
 
-  const raw = symbol as string;
-  // Override stale symbol from old contract deployment
-  if (!raw || raw === 'VIDE') return 'SEESHOW';
-  return raw;
+  return (symbol as string) || 'SEESHOW';
 }

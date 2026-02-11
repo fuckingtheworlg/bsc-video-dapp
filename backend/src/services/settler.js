@@ -116,7 +116,7 @@ async function distributeBnbRewards(roundId) {
 
     logger.info(`Round ${roundId}: Distributing BNB to ${winners.length} winner(s), total pool: ${ethers.formatEther(totalReward)} BNB`);
 
-    // Fixed split: 50/30/20 — positions without winners are skipped (BNB stays in wallet)
+    // Fixed split: 25/15/10 — positions without winners are skipped (BNB stays in wallet)
     for (let i = 0; i < winners.length; i++) {
       const amount = totalReward * BigInt(BNB_REWARD_SPLIT[winners[i].rank]) / 100n;
       if (amount <= 0n) continue;

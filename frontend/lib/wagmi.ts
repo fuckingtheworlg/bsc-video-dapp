@@ -8,7 +8,7 @@ import {
   rainbowWallet,
 } from '@rainbow-me/rainbowkit/wallets';
 import { createConfig, http } from 'wagmi';
-import { bsc, bscTestnet, hardhat } from 'wagmi/chains';
+import { bsc, bscTestnet } from 'wagmi/chains';
 
 const projectId = process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || 'YOUR_PROJECT_ID';
 

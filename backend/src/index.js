@@ -12,6 +12,7 @@ const coverRoutes = require("./routes/cover");
 const moderationRoutes = require("./routes/moderation");
 const healthRoutes = require("./routes/health");
 const aiRoutes = require("./routes/ai");
+const permitRoutes = require("./routes/permit");
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -60,6 +61,7 @@ app.use("/api/cover", coverRoutes);
 app.use("/api/moderation", moderationRoutes);
 app.use("/api/health", healthRoutes);
 app.use("/api/ai", aiRoutes);
+app.use("/api/permit", permitRoutes);
 
 // Global error handler
 app.use((err, req, res, next) => {
