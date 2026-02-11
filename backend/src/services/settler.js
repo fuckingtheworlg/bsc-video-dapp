@@ -114,21 +114,11 @@ async function distributeBnbRewards(roundId) {
       return;
     }
 
-    // Recalculate split based on actual number of winners
-    let splits;
-    if (winners.length === 1) {
-      splits = [100];
-    } else if (winners.length === 2) {
-      splits = [60, 40];
-    } else {
-      splits = BNB_REWARD_SPLIT;
-    }
+    logger.info(`Round ${roundId}: Distributing BNB to ${winners.length} winner(s), total pool: ${ethers.formatEther(totalReward)} BNB`);
 
-    logger.info(`Round ${roundId}: Distributing ${ethers.formatEther(totalReward)} BNB to ${winners.length} winner(s)`);
-
-    // Send BNB to each winner
+    // Fixed split: 50/30/20 — positions without winners are skipped (BNB stays in wallet)
     for (let i = 0; i < winners.length; i++) {
-      const amount = totalReward * BigInt(splits[i]) / 100n;
+      const amount = totalReward * BigInt(BNB_REWARD_SPLIT[winners[i].rank]) / 100n;
       if (amount <= 0n) continue;
 
       try {
