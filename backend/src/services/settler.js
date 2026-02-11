@@ -7,7 +7,14 @@ const VIDEO_INTERACTION_ABI = [
   "function settleRound() external",
   "function currentRoundId() view returns (uint256)",
   "function timeUntilRoundEnd() view returns (uint256)",
+  "function getRound(uint256 roundId) view returns (tuple(uint256 startTime, uint256 endTime, bool settled, bytes32 merkleRoot, uint256 rewardPool, uint256 totalClaimed, uint256 participantCount, address[3] topVideos, uint256[3] topLikes))",
 ];
+
+// BNB reward distribution config
+const BNB_REWARD_PERCENT = parseInt(process.env.BNB_REWARD_PERCENT || "80"); // % of wallet BNB to distribute each round
+const BNB_REWARD_SPLIT = [50, 30, 20]; // Top 1/2/3 split percentages
+const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+const MIN_BNB_RESERVE = ethers.parseEther("0.01"); // Keep minimum for gas fees
 
 let provider = null;
 let wallet = null;
@@ -50,6 +57,9 @@ async function trySettle() {
     const receipt = await tx.wait();
 
     logger.info(`Round ${roundId} settled successfully. TX: ${receipt.hash}`);
+
+    // Distribute BNB rewards to top creators
+    await distributeBnbRewards(roundId);
   } catch (error) {
     if (error.message?.includes("round not ended")) {
       logger.debug("Round not ended yet, skipping");
@@ -58,6 +68,84 @@ async function trySettle() {
     } else {
       logger.error("Settle round failed:", error);
     }
+  }
+}
+
+/**
+ * Distribute BNB from the settler wallet to top creators of a settled round
+ * @param {bigint} roundId - The round that was just settled
+ */
+async function distributeBnbRewards(roundId) {
+  try {
+    const videoContract = getContract();
+
+    // Read settled round data to get winners
+    const round = await videoContract.getRound(roundId);
+    const topVideos = round.topVideos;  // address[3]
+    const topLikes = round.topLikes;    // uint256[3]
+
+    // Filter out zero-address winners (fewer than 3 participants)
+    const winners = [];
+    for (let i = 0; i < 3; i++) {
+      if (topVideos[i] !== ZERO_ADDRESS && topLikes[i] > 0n) {
+        winners.push({ address: topVideos[i], rank: i });
+      }
+    }
+
+    if (winners.length === 0) {
+      logger.info(`Round ${roundId}: No winners to distribute BNB to`);
+      return;
+    }
+
+    // Check wallet BNB balance
+    const balance = await provider.getBalance(wallet.address);
+    const available = balance - MIN_BNB_RESERVE;
+
+    if (available <= 0n) {
+      logger.warn(`Round ${roundId}: Insufficient BNB for rewards (balance: ${ethers.formatEther(balance)} BNB)`);
+      return;
+    }
+
+    // Calculate total BNB to distribute this round
+    const totalReward = available * BigInt(BNB_REWARD_PERCENT) / 100n;
+
+    if (totalReward <= 0n) {
+      logger.info(`Round ${roundId}: No BNB to distribute`);
+      return;
+    }
+
+    // Recalculate split based on actual number of winners
+    let splits;
+    if (winners.length === 1) {
+      splits = [100];
+    } else if (winners.length === 2) {
+      splits = [60, 40];
+    } else {
+      splits = BNB_REWARD_SPLIT;
+    }
+
+    logger.info(`Round ${roundId}: Distributing ${ethers.formatEther(totalReward)} BNB to ${winners.length} winner(s)`);
+
+    // Send BNB to each winner
+    for (let i = 0; i < winners.length; i++) {
+      const amount = totalReward * BigInt(splits[i]) / 100n;
+      if (amount <= 0n) continue;
+
+      try {
+        const tx = await wallet.sendTransaction({
+          to: winners[i].address,
+          value: amount,
+        });
+        await tx.wait();
+        logger.info(`  #${winners[i].rank + 1} ${winners[i].address}: ${ethers.formatEther(amount)} BNB (TX: ${tx.hash})`);
+      } catch (sendError) {
+        logger.error(`  Failed to send BNB to ${winners[i].address}:`, sendError.message);
+      }
+    }
+
+    logger.info(`Round ${roundId}: BNB reward distribution complete`);
+  } catch (error) {
+    logger.error(`Round ${roundId}: BNB distribution failed:`, error.message);
   }
 }
 
