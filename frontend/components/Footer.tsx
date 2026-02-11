@@ -6,8 +6,8 @@ import { useState } from "react";
 
 export function Footer() {
   const [copied, setCopied] = useState(false);
-  const tokenAddress = process.env.NEXT_PUBLIC_TOKEN_ADDRESS || "";
-  const contractAddress = tokenAddress && tokenAddress !== "0x0000000000000000000000000000000000000000" ? tokenAddress : "TBA";
+  const displayCA = process.env.NEXT_PUBLIC_TOKEN_CA || "";
+  const contractAddress = displayCA ? displayCA : "TBA";
 
   const handleCopy = () => {
     if (contractAddress === "TBA") return;
